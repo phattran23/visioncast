@@ -165,7 +165,7 @@ export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
           )}
 
           {!loading && query && results.length === 0 && (
-            <div className="search-empty">No results for "{query}"</div>
+            <div className="search-empty">{t("search.noResults", { query })}</div>
           )}
 
           {!loading &&
@@ -201,9 +201,9 @@ export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
           {showHistory && (
             <div className="search-history">
               <div className="search-history-header">
-                <span className="search-history-label">Recent searches</span>
+                <span className="search-history-label">{t("search.recent")}</span>
                 <button className="search-history-clear" onClick={clearHistory}>
-                  Clear all
+                  {t("search.clear")}
                 </button>
               </div>
               {history.map((term) => (

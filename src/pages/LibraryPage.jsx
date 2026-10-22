@@ -205,10 +205,8 @@ export default function LibraryPage({
       {history.length === 0 && saved.length === 0 && (
         <div className="empty-state">
           <EyeIcon />
-          <h3>Nothing here yet</h3>
-          <p>
-            Start watching a movie or series and your history will appear here.
-          </p>
+          <h3>{t("library.emptyTitle")}</h3>
+          <p>{t("library.emptyBody")}</p>
         </div>
       )}
     </div>

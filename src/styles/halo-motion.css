@@ -1,0 +1,406 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Halo motion + phone sizing pass (loaded after halo.css)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    --spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+/* ── Tab bar: a highlight pill slides between tabs, icon pops on select ─── */
+.halo-tab-indicator {
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    left: 5px;
+    width: calc((100% - 10px) / 4);
+    border-radius: 999px;
+    background: var(--glass-hi);
+    transform: translateX(calc(var(--tab, 0) * 100%));
+    transition: transform 0.5s var(--spring), opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.halo-tab {
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease;
+}
+
+.halo-tab svg {
+    transition: transform 0.2s var(--ease);
+}
+
+.halo-tab:active svg {
+    transform: scale(0.88);
+}
+
+.halo-tab.is-active svg {
+    animation: vc-tab-pop 0.5s var(--spring);
+}
+
+@keyframes vc-tab-pop {
+    0% { transform: scale(0.85); }
+    45% { transform: scale(1.18) translateY(-2px); }
+    100% { transform: none; }
+}
+
+/* ── Search: sheet glides in, results ripple in one after another ──────── */
+.modal-overlay {
+    animation: vc-fade 0.25s ease;
+}
+
+.search-box {
+    animation: vc-sheet-in 0.45s var(--ease);
+}
+
+@keyframes vc-fade {
+    from { opacity: 0; }
+}
+
+@keyframes vc-sheet-in {
+    from {
+        opacity: 0;
+        transform: translateY(-14px) scale(0.98);
+    }
+}
+
+@keyframes vc-sheet-up {
+    from {
+        opacity: 0;
+        transform: translateY(28px);
+    }
+}
+
+@keyframes vc-row-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+}
+
+.search-result,
+.search-history-item {
+    animation: vc-row-in 0.45s var(--ease) backwards;
+}
+
+.search-result:nth-child(1), .search-history-item:nth-child(2) { animation-delay: 0.03s; }
+.search-result:nth-child(2), .search-history-item:nth-child(3) { animation-delay: 0.06s; }
+.search-result:nth-child(3), .search-history-item:nth-child(4) { animation-delay: 0.09s; }
+.search-result:nth-child(4), .search-history-item:nth-child(5) { animation-delay: 0.12s; }
+.search-result:nth-child(5), .search-history-item:nth-child(6) { animation-delay: 0.15s; }
+.search-result:nth-child(6) { animation-delay: 0.18s; }
+.search-result:nth-child(7) { animation-delay: 0.21s; }
+.search-result:nth-child(8) { animation-delay: 0.24s; }
+.search-result:nth-child(n + 9) { animation-delay: 0.27s; }
+
+.search-result-type {
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border) !important;
+    background: color-mix(in srgb, var(--text) 7%, transparent) !important;
+    color: var(--text2) !important;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+}
+
+/* ── Library: header, sections and rows rise in sequence ────────────────── */
+.library-header {
+    animation: halo-rise 0.6s var(--ease) backwards;
+}
+
+.library-section,
+.empty-state {
+    animation: halo-rise 0.7s var(--ease) 0.08s backwards;
+}
+
+.library-section:nth-of-type(3) { animation-delay: 0.16s; }
+.library-section:nth-of-type(4) { animation-delay: 0.24s; }
+
+.library-section .card,
+.history-row {
+    animation: vc-row-in 0.5s var(--ease) backwards;
+}
+
+.library-section .card:nth-child(1), .history-row:nth-child(1) { animation-delay: 0.18s; }
+.library-section .card:nth-child(2), .history-row:nth-child(2) { animation-delay: 0.23s; }
+.library-section .card:nth-child(3), .history-row:nth-child(3) { animation-delay: 0.28s; }
+.library-section .card:nth-child(4), .history-row:nth-child(4) { animation-delay: 0.33s; }
+.library-section .card:nth-child(5), .history-row:nth-child(5) { animation-delay: 0.38s; }
+.library-section .card:nth-child(n + 6), .history-row:nth-child(n + 6) { animation-delay: 0.43s; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Phone sizing: tighter, more balanced proportions
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+    :root {
+        --nav-h: 60px;
+        --tabbar-space: calc(84px + env(safe-area-inset-bottom));
+    }
+
+    /* Header */
+    .halo-mobilebar {
+        padding: 8px 16px;
+        padding-top: max(8px, env(safe-area-inset-top));
+    }
+    .halo-mobilebar .halo-brand {
+        font-size: 20px;
+        height: 40px;
+    }
+    .halo-mobilebar .halo-brand__logo {
+        width: 26px;
+        height: 26px;
+    }
+    .halo-mobilebar .halo-icon-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Hero */
+    .halo-hero {
+        height: min(520px, 66vh);
+        min-height: 420px;
+        border-radius: 28px;
+    }
+    .halo-hero__text {
+        left: 18px;
+        right: 18px;
+        bottom: 50px;
+        gap: 12px;
+    }
+    .halo-chip {
+        height: 28px;
+        padding: 0 11px;
+        font-size: 11.5px;
+    }
+    .halo-hero__title {
+        font-size: clamp(34px, 10.5vw, 46px);
+    }
+    .halo-hero__line {
+        font-size: 15px;
+    }
+    .halo-btn-play {
+        height: 50px;
+        font-size: 16px;
+    }
+    .halo-hero__actions .halo-icon-btn--lg {
+        width: 50px;
+        height: 50px;
+    }
+    .halo-dots {
+        bottom: 2px;
+    }
+
+    /* Rails */
+    .halo-section {
+        padding-top: 28px;
+    }
+    .halo-section + .halo-section {
+        padding-top: 14px;
+    }
+    .halo-section__head {
+        margin-bottom: 10px;
+    }
+    .halo-section__title {
+        font-size: 20px;
+    }
+    .halo-rail {
+        gap: 12px;
+        padding: 8px 16px 12px;
+    }
+    .halo-section--tall .halo-rail > .card {
+        flex: 0 0 128px;
+    }
+    .halo-wide {
+        flex: 0 0 min(260px, 72vw);
+    }
+    .halo-wide__frame {
+        border-radius: 18px;
+        margin-bottom: 8px;
+    }
+    .halo-wide__title {
+        font-size: 15px;
+    }
+    .halo-wide__meta {
+        font-size: 12px;
+    }
+
+    /* Poster cards */
+    .card-poster {
+        border-radius: 16px;
+    }
+    .card-info {
+        padding: 9px 2px 0;
+    }
+    .card-title {
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+    .card-year {
+        font-size: 12px;
+    }
+    .card-badge,
+    .card-age-badge {
+        top: 7px;
+        height: 20px;
+        padding: 0 7px;
+        font-size: 9.5px;
+    }
+    .card-badge {
+        right: 7px;
+    }
+    .card-age-badge {
+        left: 7px;
+    }
+    .card-play {
+        display: none;
+    }
+    .cards-grid {
+        gap: 18px 10px;
+        grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    }
+    .scroll-row .card {
+        width: 128px;
+    }
+
+    /* Tab bar (stays above the search sheet) */
+    .halo-tabbar {
+        left: 14px;
+        right: 14px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        padding: 5px;
+        z-index: 220;
+    }
+    .halo-tab {
+        min-height: 50px;
+        gap: 2px;
+        font-size: 10.5px;
+    }
+    .halo-tab svg {
+        width: 21px;
+        height: 21px;
+    }
+    .halo-tab.is-active {
+        background: transparent;
+    }
+
+    /* Library */
+    .library-header {
+        padding: 4px 16px 0;
+    }
+    .library-title {
+        font-size: 32px;
+    }
+    .library-sub {
+        font-size: 13px;
+    }
+    .library-section {
+        padding: 18px 16px;
+    }
+    .library-section-title {
+        font-size: 19px;
+        margin-bottom: 12px;
+    }
+    .history-row {
+        padding: 8px 10px;
+        gap: 12px;
+        border-radius: 16px;
+    }
+    .history-thumb {
+        width: 32px;
+        height: 48px;
+    }
+    .empty-state {
+        padding: 56px 24px;
+    }
+
+    /* Detail pages */
+    .detail-bg {
+        height: 260px;
+    }
+    .detail-content {
+        margin-top: -100px;
+        padding: 0 18px 22px;
+    }
+    .detail-poster {
+        width: 104px;
+        border-radius: 16px;
+    }
+    .detail-title {
+        font-size: clamp(30px, 9vw, 40px);
+    }
+    .detail-actions .btn {
+        height: 44px;
+        font-size: 14px;
+    }
+    .detail-actions .btn-primary {
+        height: 50px;
+        font-size: 16px;
+    }
+
+    /* Search sheet: slides up, sits above the tab bar */
+    .modal-overlay {
+        padding-bottom: var(--tabbar-space);
+    }
+    .search-box {
+        animation-name: vc-sheet-up;
+    }
+    .search-input-wrap {
+        padding: 12px 14px 12px 18px;
+    }
+    .search-input {
+        font-size: 17px;
+    }
+    .search-input-wrap .btn-icon {
+        width: 40px;
+        height: 40px;
+    }
+    .search-results {
+        max-height: calc(100dvh - var(--tabbar-space) - 110px);
+        padding: 6px;
+    }
+    .search-result {
+        padding: 8px 10px;
+        gap: 12px;
+    }
+    .search-result-title {
+        font-size: 15px;
+    }
+
+    /* Settings */
+    .vc-settings__title {
+        font-size: 32px;
+    }
+    .vc-card__title {
+        font-size: 17px;
+    }
+    .vc-row {
+        min-height: 56px;
+        padding: 10px 0;
+    }
+    .vc-seg__btn {
+        height: 38px;
+    }
+    .vc-select {
+        height: 42px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .halo-tab-indicator,
+    .halo-tab svg,
+    .modal-overlay,
+    .search-box,
+    .search-result,
+    .search-history-item,
+    .library-header,
+    .library-section,
+    .library-section .card,
+    .history-row,
+    .empty-state {
+        animation: none !important;
+        transition: none !important;
+    }
+}

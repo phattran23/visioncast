@@ -982,10 +982,17 @@ export default function App() {
         <div className="main">
           <HaloNav
             page={page}
-            onNavigate={navigate}
-            onSearch={() => setShowSearch(true)}
+            onNavigate={(...args) => {
+              setShowSearch(false);
+              navigate(...args);
+            }}
+            onSearch={() => setShowSearch((v) => !v)}
             canGoBack={navStack.length > 0}
-            onBack={navigateBack}
+            onBack={() => {
+              setShowSearch(false);
+              navigateBack();
+            }}
+            searchOpen={showSearch}
           />
 
           {/* ── API key status banner ── */}

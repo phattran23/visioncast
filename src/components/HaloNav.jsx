@@ -36,8 +36,13 @@ export default function HaloNav({
   onSearch,
   canGoBack,
   onBack,
+  searchOpen,
 }) {
   const t = useT();
+  // Which bottom tab the sliding indicator sits under (-1 = none, e.g. a title page)
+  const tabIndex = searchOpen
+    ? 1
+    : { home: 0, history: 2, settings: 3 }[page] ?? -1;
   return (
     <>
       {/* ── Desktop: top glass pill ── */}
@@ -96,23 +101,36 @@ export default function HaloNav({
 
       {/* ── Mobile: bottom tab bar ── */}
       <nav className="halo-tabbar glass" aria-label="Primary">
+        <span
+          className="halo-tab-indicator"
+          aria-hidden="true"
+          style={{
+            "--tab": tabIndex < 0 ? 0 : tabIndex,
+            opacity: tabIndex < 0 ? 0 : 1,
+          }}
+        />
         <TabBtn
           label={t("nav.home")}
           icon={HomeIcon}
-          active={page === "home"}
+          active={!searchOpen && page === "home"}
           onClick={() => onNavigate("home")}
         />
-        <TabBtn label={t("nav.search")} icon={SearchIcon} onClick={onSearch} />
+        <TabBtn
+          label={t("nav.search")}
+          icon={SearchIcon}
+          active={!!searchOpen}
+          onClick={onSearch}
+        />
         <TabBtn
           label={t("nav.library")}
           icon={BookmarkIcon}
-          active={page === "history"}
+          active={!searchOpen && page === "history"}
           onClick={() => onNavigate("history")}
         />
         <TabBtn
           label={t("nav.settings")}
           icon={SettingsIcon}
-          active={page === "settings"}
+          active={!searchOpen && page === "settings"}
           onClick={() => onNavigate("settings")}
         />
       </nav>
