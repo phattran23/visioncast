@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "VisionCast Ad Blocker",
+  "version": "1.0.0",
+  "description": "Blocks ads, trackers and pop-up tabs from the player inside VisionCast.",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "permissions": [
+    "declarativeNetRequest",
+    "webNavigation",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "detect.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}

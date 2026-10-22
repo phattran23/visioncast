@@ -1,0 +1,22 @@
+{
+  "name": "streambert-web",
+  "version": "2.6.0",
+  "description": "Streambert Web App (browser version of the Streambert desktop app)",
+  "license": "GPL-3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "terser": "^5.46.0",
+    "vite": "^7.3.1"
+  }
+}
