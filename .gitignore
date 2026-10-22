@@ -6,3 +6,4 @@ dist/
 *secret.txt
 .env
 .env.*
+.wrangler/

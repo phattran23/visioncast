@@ -64,14 +64,15 @@ Install (Chrome, Edge, Brave, Opera):
 
 Not supported in Firefox without packaging and signing the extension.
 
-## Deploy (GitHub Pages)
+## Deploy (Cloudflare)
 
-The live site is served from the `gh-pages` branch. To publish a new version:
+Live at https://visioncast.trantienphat-ftu2.workers.dev, served by Cloudflare
+Workers static assets (`wrangler.jsonc` → `dist/`). To publish a new version:
 
 ```bash
-npm run build                        # needs .env with VITE_TMDB_TOKEN
-npx gh-pages -d dist                 # or push dist/ to the gh-pages branch
+npx wrangler login     # once
+npm run deploy         # builds (needs .env with VITE_TMDB_TOKEN) and uploads
 ```
 
-`.env` is not committed. Note that the token is embedded in the built
-JavaScript, so anyone visiting the site can read it.
+`.env` is not committed. The token is embedded in the built JavaScript, so
+anyone visiting the site can read it.
