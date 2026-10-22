@@ -7,6 +7,7 @@ import { useRatings, getRatingForItem } from "../utils/useRatings";
 import { isRestricted } from "../utils/ageRating";
 import { storage } from "../utils/storage";
 import { loadHomeLayout, loadHomeViewMode } from "../utils/homeLayout";
+import { useT } from "../utils/i18n";
 
 /**
  * Extract up to `count` unique, recently watched items from the user's
@@ -49,6 +50,7 @@ export default function HomePage({
   isSaved,
   onToggleSave,
 }) {
+  const t = useT();
 
   const [recommendedItems, setRecommendedItems] = useState([]);
   const [topRatedItems, setTopRatedItems] = useState([]);
@@ -265,18 +267,17 @@ export default function HomePage({
         >
           <div style={{ fontSize: 48 }}>📡</div>
           <div style={{ fontSize: 20, fontWeight: 600, color: "var(--text)" }}>
-            No internet connection
+            {t("home.offlineTitle")}
           </div>
           <div style={{ fontSize: 14, color: "var(--text3)" }}>
-            Trending and search require an internet connection. Your downloads
-            and library still work offline.
+            {t("home.offlineBody")}
           </div>
           <button
             className="btn btn-primary"
             style={{ marginTop: 8 }}
             onClick={onRetry}
           >
-            Retry
+            {t("home.retry")}
           </button>
         </div>
       )}
@@ -304,7 +305,7 @@ export default function HomePage({
         if (id === "continue") {
           if (inProgress.length === 0) return null;
           return (
-            <HaloRail key="continue" title="Up next" variant="wide">
+            <HaloRail key="continue" title={t("home.upNext")} variant="wide">
               {inProgress.map((item) => {
                 const pk =
                   item.media_type === "movie"
@@ -326,15 +327,15 @@ export default function HomePage({
         if (id === "recommended")
           return renderRow(
             "recommended",
-            "Recommended for you",
+            t("home.recommended"),
             filteredRecommendedItems,
           );
         if (id === "trendingMovies")
-          return renderRow("trendingMovies", "Trending movies", trendingMovieItems);
+          return renderRow("trendingMovies", t("home.trendingMovies"), trendingMovieItems);
         if (id === "trendingTV")
-          return renderRow("trendingTV", "Trending series", trendingTVItems);
+          return renderRow("trendingTV", t("home.trendingTV"), trendingTVItems);
         if (id === "topRated")
-          return renderRow("topRated", "Top rated", topRatedItems);
+          return renderRow("topRated", t("home.topRated"), topRatedItems);
 
         return null;
       })}

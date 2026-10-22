@@ -5,6 +5,7 @@ import { EyeIcon, WatchedIcon } from "../components/Icons";
 import { useRatings, getRatingForItem } from "../utils/useRatings";
 import { isRestricted } from "../utils/ageRating";
 import { storage, STORAGE_KEYS } from "../utils/storage";
+import { useT } from "../utils/i18n";
 
 export default function LibraryPage({
   history,
@@ -17,6 +18,7 @@ export default function LibraryPage({
   onMarkUnwatched,
   onRemoveHistory,
 }) {
+  const t = useT();
   const allItems = useMemo(
     () => [...inProgress, ...saved],
     [inProgress, saved],
@@ -52,15 +54,15 @@ export default function LibraryPage({
   return (
     <div className="fade-in">
       <div className="library-header">
-        <div className="library-title">My Library</div>
+        <div className="library-title">{t("library.title")}</div>
         <div className="library-sub">
-          Watch history, progress, and saved titles
+          {t("library.sub")}
         </div>
       </div>
 
       {inProgress.length > 0 && (
         <div className="library-section">
-          <div className="library-section-title">Continue Watching</div>
+          <div className="library-section-title">{t("library.continue")}</div>
           <div className="cards-grid">
             {inProgress.map((item, i) => {
               const pk =
@@ -90,7 +92,7 @@ export default function LibraryPage({
       {saved.length > 0 && (
         <div className="library-section">
           <div className="library-section-title">
-            Watchlist ({saved.length})
+            {t("library.watchlist")} ({saved.length})
             {sort !== "manual" && (
               <span
                 style={{
@@ -127,7 +129,7 @@ export default function LibraryPage({
 
       {history.length > 0 && (
         <div className="library-section">
-          <div className="library-section-title">Watch History</div>
+          <div className="library-section-title">{t("library.history")}</div>
           <div className="history-rows">
             {history.map((item, i) => {
               const pk =
@@ -179,7 +181,7 @@ export default function LibraryPage({
                   <span
                     className={`search-result-type ${item.media_type === "tv" ? "type-tv" : "type-movie"}`}
                   >
-                    {item.media_type === "tv" ? "Series" : "Movie"}
+                    {item.media_type === "tv" ? t("media.series") : t("media.movie")}
                   </span>
                   {onRemoveHistory && (
                     <button

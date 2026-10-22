@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { imgUrl, isAnimeContent } from "../utils/api";
+import { useT } from "../utils/i18n";
 import {
   PlayIcon,
   FilmIcon,
@@ -19,6 +20,7 @@ const MediaCard = memo(function MediaCard({
   ageRating,
   restricted,
 }) {
+  const t = useT();
   const title = item.title || item.name;
   const year = (item.release_date || item.first_air_date || "").slice(0, 4);
   const isTV = item.media_type === "tv";
@@ -145,7 +147,7 @@ const MediaCard = memo(function MediaCard({
           <div className="card-year">
             {isTV && item.season != null && item.episode != null
               ? `S${item.season}E${item.episode}${item.episodeName ? ` · ${item.episodeName}` : ""}`
-              : `${year} · ${isTV ? "Series" : "Movie"}`}
+              : `${year} · ${isTV ? t("media.series") : t("media.movie")}`}
           </div>
         </div>
         <span

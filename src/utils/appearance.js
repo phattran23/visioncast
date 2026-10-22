@@ -17,6 +17,15 @@ export const ACCENT_PRESETS = [
     onAccent: "#08080b",
   },
   {
+    id: "ink",
+    label: "Ink",
+    color: "#0b0b10",
+    color2: "#24242c",
+    dim: "rgba(11,11,16,0.1)",
+    glow: "0 12px 40px rgba(11,11,16,0.18)",
+    onAccent: "#ffffff",
+  },
+  {
     id: "red",
     label: "Red",
     color: "#e50914",
@@ -97,6 +106,21 @@ export const THEME_PRESETS = [
       "--text": "#ffffff",
       "--text2": "#c4c4cc",
       "--text3": "#9a9aa4",
+    },
+  },
+  {
+    id: "halo-light",
+    label: "Halo Light",
+    description: "VisionCast paper tones",
+    vars: {
+      "--bg": "#f4f1ea",
+      "--surface": "#fbf9f4",
+      "--surface2": "#ece8df",
+      "--surface3": "#e2ddd2",
+      "--border": "#d3cdc0",
+      "--text": "#0b0b10",
+      "--text2": "#3a3833",
+      "--text3": "#66625a",
     },
   },
   {
@@ -205,7 +229,21 @@ export function applyTheme(themeId, customVars = null) {
   const vars =
     themeId === "custom" ? (customVars ?? DEFAULT_CUSTOM_VARS) : preset.vars;
   const root = document.documentElement;
+  root.dataset.theme = themeId;
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", vars["--bg"]);
   for (const [prop, value] of Object.entries(vars)) {
     root.style.setProperty(prop, value);
   }
+}
+
+// VisionCast offers just two modes; each maps to a theme + accent pair.
+export const APPEARANCE_MODES = {
+  dark: { theme: "halo", accent: "white" },
+  light: { theme: "halo-light", accent: "ink" },
+};
+
+export function getAppearanceMode(themeId) {
+  return themeId === "halo-light" ? "light" : "dark";
 }

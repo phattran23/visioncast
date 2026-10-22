@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { imgUrl } from "../utils/api";
 import { PlayIcon, StarIcon } from "./Icons";
+import { useT } from "../utils/i18n";
 
 // Halo hero: a rounded card that cross-fades between a handful of titles, with
 // a blurred copy of the current artwork glowing behind the page ("ambient").
@@ -20,6 +21,7 @@ const CheckIcon = () => (
 );
 
 export default function HaloHero({ items, onSelect, isSaved, onToggleSave }) {
+  const t = useT();
   const slides = items.filter((i) => i.backdrop_path || i.poster_path);
   const count = slides.length;
   const [active, setActive] = useState(0);
@@ -103,7 +105,7 @@ export default function HaloHero({ items, onSelect, isSaved, onToggleSave }) {
               aria-hidden={!on}
             >
               <span className="halo-chip glass">
-                Trending · {s.media_type === "tv" ? "Series" : "Movie"}
+                {t("hero.trending")} · {s.media_type === "tv" ? t("media.series") : t("media.movie")}
               </span>
               <h1 className="halo-hero__title">{title}</h1>
               {s.overview && <p className="halo-hero__line">{s.overview}</p>}
@@ -113,13 +115,13 @@ export default function HaloHero({ items, onSelect, isSaved, onToggleSave }) {
                   onClick={() => onSelect(s)}
                   tabIndex={on ? 0 : -1}
                 >
-                  <PlayIcon /> Play
+                  <PlayIcon /> {t("hero.play")}
                 </button>
                 {onToggleSave && (
                   <button
                     className="halo-icon-btn halo-icon-btn--lg glass"
                     onClick={() => onToggleSave(s)}
-                    aria-label={saved ? `Remove ${title} from watchlist` : `Add ${title} to watchlist`}
+                    aria-label={t(saved ? "hero.remove" : "hero.add", { title })}
                     aria-pressed={!!saved}
                     tabIndex={on ? 0 : -1}
                   >

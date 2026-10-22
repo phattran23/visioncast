@@ -73,6 +73,7 @@ import {
 } from "../utils/playerGamepadScript";
 import { setPlayerGamepadActive } from "../utils/gamepadPlayerState";
 import PlayerFrame from "../components/PlayerFrame";
+import { useT } from "../utils/i18n";
 
 // ── Partial-circle progress icon (cached per pct tier) ───────────────────────
 // Uses a single SVG arc. Three instances (25/50/75)
@@ -416,6 +417,7 @@ export default function TVPage({
   onGoToDownloads,
   onEpisodeChange,
 }) {
+  const t = useT();
   const [details, setDetails] = useState(null);
   const [seasonData, setSeasonData] = useState(null);
   const [failedSeasons, setFailedSeasons] = useState(() => new Set()); // season numbers which give 404 on TMDB
@@ -1712,7 +1714,7 @@ export default function TVPage({
                 )}
               </div>
               <div className="detail-info">
-                <div className="detail-type">Series</div>
+                <div className="detail-type">{t("media.series")}</div>
                 <div className="detail-title">{title}</div>
                 <div className="genres">
                   {displayGenres.map((g) => (
@@ -1775,15 +1777,15 @@ export default function TVPage({
                         className="btn btn-secondary"
                         onClick={() => setShowTrailer(true)}
                       >
-                        <TrailerIcon /> Trailer
+                        <TrailerIcon /> {t("detail.trailer")}
                       </button>
                     ))}
                   <button className="btn btn-secondary" onClick={onSave}>
                     {isSaved ? <BookmarkFillIcon /> : <BookmarkIcon />}
-                    {isSaved ? "Saved" : "Save"}
+                    {isSaved ? t("detail.saved") : t("detail.save")}
                   </button>
                   <button className="btn btn-ghost" onClick={onBack}>
-                    <BackIcon /> Back
+                    <BackIcon /> {t("detail.back")}
                   </button>
                 </div>
               </div>
@@ -2366,7 +2368,7 @@ export default function TVPage({
                       marginRight: 4,
                     }}
                   >
-                    Mark progress:
+                    {t("detail.markProgress")}
                   </span>
                   {[25, 50, 75, 100].map((p) => (
                     <button
@@ -2384,7 +2386,7 @@ export default function TVPage({
           )}
 
           <div className="section">
-            <div className="section-title">Episodes</div>
+            <div className="section-title">{t("detail.episodes")}</div>
             {seasons.length > 0 && (
               <div className="season-selector">
                 {seasons.map((s) => {

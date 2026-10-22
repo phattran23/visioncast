@@ -34,6 +34,7 @@ import {
 } from "./utils/discordPresence";
 
 import HaloNav from "./components/HaloNav";
+import { useLang } from "./utils/i18n";
 import SearchModal from "./components/SearchModal";
 import SetupScreen from "./components/SetupScreen";
 import CloseConfirmModal from "./components/CloseConfirmModal";
@@ -49,6 +50,10 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const DownloadsPage = lazy(() => import("./pages/DownloadsPage"));
 
 export default function App() {
+  const uiLang = useLang();
+  useEffect(() => {
+    document.documentElement.lang = uiLang;
+  }, [uiLang]);
   // apiKey loaded async from secure storage (OS keychain)
   const [apiKey, setApiKey] = useState(null);
   const [apiKeyLoaded, setApiKeyLoaded] = useState(false);

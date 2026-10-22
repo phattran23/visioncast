@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { tmdbFetch, imgUrl } from "../utils/api";
 import { SearchIcon, CloseIcon } from "./Icons";
 import { storage } from "../utils/storage";
+import { useT } from "../utils/i18n";
 
 const HISTORY_KEY = "searchHistory";
 const MAX_HISTORY = 12;
@@ -15,6 +16,7 @@ function saveHistory(history) {
 }
 
 export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -119,7 +121,7 @@ export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
           <input
             ref={inputRef}
             className="search-input"
-            placeholder="Search movies and series..."
+            placeholder={t("search.placeholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKey}
@@ -191,7 +193,7 @@ export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
                 <span
                   className={`search-result-type ${r.media_type === "tv" ? "type-tv" : "type-movie"}`}
                 >
-                  {r.media_type === "tv" ? "Series" : "Movie"}
+                  {r.media_type === "tv" ? t("media.series") : t("media.movie")}
                 </span>
               </div>
             ))}

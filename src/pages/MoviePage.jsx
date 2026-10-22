@@ -65,6 +65,7 @@ import {
 } from "../utils/playerGamepadScript";
 import { setPlayerGamepadActive } from "../utils/gamepadPlayerState";
 import PlayerFrame from "../components/PlayerFrame";
+import { useT } from "../utils/i18n";
 
 export default function MoviePage({
   item,
@@ -85,6 +86,7 @@ export default function MoviePage({
   onGoToDownloads,
   onSelect,
 }) {
+  const t = useT();
   const [details, setDetails] = useState(null);
   const [playing, setPlaying] = useState(false);
   const [showDownload, setShowDownload] = useState(false);
@@ -785,7 +787,7 @@ export default function MoviePage({
             )}
           </div>
           <div className="detail-info">
-            <div className="detail-type">Movie</div>
+            <div className="detail-type">{t("media.movie")}</div>
             <div className="detail-title">{title}</div>
             <div className="genres">
               {displayGenres.map((g) => (
@@ -844,7 +846,7 @@ export default function MoviePage({
                   disabled
                   title="This movie has not been released yet"
                 >
-                  🔒 Unreleased
+                  {t("detail.unreleased")}
                 </button>
               ) : restricted ? (
                 <button
@@ -852,11 +854,11 @@ export default function MoviePage({
                   disabled
                   title="Inappropriate for your age rating setting"
                 >
-                  🔒 Restricted
+                  {t("detail.restricted")}
                 </button>
               ) : (
                 <button className="btn btn-primary" onClick={handlePlay}>
-                  <PlayIcon /> {playing ? "Restart" : "Play"}
+                  <PlayIcon /> {playing ? t("detail.restart") : t("detail.play")}
                 </button>
               )}
               {trailerKey &&
@@ -873,12 +875,12 @@ export default function MoviePage({
                     className="btn btn-secondary"
                     onClick={() => setShowTrailer(true)}
                   >
-                    <TrailerIcon /> Trailer
+                    <TrailerIcon /> {t("detail.trailer")}
                   </button>
                 ))}
               <button className="btn btn-secondary" onClick={onSave}>
                 {isSaved ? <BookmarkFillIcon /> : <BookmarkIcon />}
-                {isSaved ? "Saved" : "Save"}
+                {isSaved ? t("detail.saved") : t("detail.save")}
               </button>
               {!isUnreleased &&
                 (isWatched ? (
@@ -886,7 +888,7 @@ export default function MoviePage({
                     className="btn btn-ghost watched-btn"
                     onClick={() => onMarkUnwatched?.(progressKey)}
                   >
-                    <WatchedIcon size={16} /> Watched
+                    <WatchedIcon size={16} /> {t("detail.watched")}
                   </button>
                 ) : (
                   <>
@@ -894,7 +896,7 @@ export default function MoviePage({
                       className="btn btn-ghost"
                       onClick={() => onMarkWatched?.(progressKey)}
                     >
-                      ✓ Mark Watched
+                      {t("detail.markWatched")}
                     </button>
                     {hasProgress && (
                       <button
@@ -905,13 +907,13 @@ export default function MoviePage({
                           storage.set("dlTime_" + progressKey, null);
                         }}
                       >
-                        ⊘ Not Started
+                        {t("detail.notStarted")}
                       </button>
                     )}
                   </>
                 ))}
               <button className="btn btn-ghost" onClick={onBack}>
-                <BackIcon /> Back
+                <BackIcon /> {t("detail.back")}
               </button>
             </div>
           </div>
@@ -1175,7 +1177,7 @@ export default function MoviePage({
             <span
               style={{ fontSize: 12, color: "var(--text3)", marginRight: 4 }}
             >
-              Mark progress:
+              {t("detail.markProgress")}
             </span>
             {[25, 50, 75, 100].map((p) => (
               <button

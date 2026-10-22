@@ -7,15 +7,16 @@ import {
   SettingsIcon,
   BackIcon,
 } from "./Icons";
+import { useT } from "../utils/i18n";
 
 // Halo navigation: a floating glass pill at the top on desktop, and on phones a
 // slim top bar (back + logo) plus a floating glass tab bar at the bottom.
 // Replaces the desktop app's sidebar.
 
 const LINKS = [
-  { id: "home", label: "Home", icon: HomeIcon },
-  { id: "history", label: "Library", icon: BookmarkIcon },
-  { id: "settings", label: "Settings", icon: SettingsIcon },
+  { id: "home", key: "nav.home", icon: HomeIcon },
+  { id: "history", key: "nav.library", icon: BookmarkIcon },
+  { id: "settings", key: "nav.settings", icon: SettingsIcon },
 ];
 
 function Brand({ onClick }) {
@@ -36,6 +37,7 @@ export default function HaloNav({
   canGoBack,
   onBack,
 }) {
+  const t = useT();
   return (
     <>
       {/* ── Desktop: top glass pill ── */}
@@ -45,8 +47,8 @@ export default function HaloNav({
             <button
               className="halo-icon-btn halo-icon-btn--ghost"
               onClick={onBack}
-              aria-label="Back"
-              title="Back (Ctrl+Z)"
+              aria-label={t("nav.back")}
+              title={`${t("nav.back")} (Ctrl+Z)`}
             >
               <BackIcon />
             </button>
@@ -60,15 +62,15 @@ export default function HaloNav({
                 aria-current={page === l.id ? "page" : undefined}
                 onClick={() => onNavigate(l.id)}
               >
-                {l.label}
+                {t(l.key)}
               </button>
             ))}
           </nav>
           <button
             className="halo-icon-btn"
             onClick={onSearch}
-            aria-label="Search"
-            title="Search (⌘F)"
+            aria-label={t("nav.search")}
+            title={`${t("nav.search")} (⌘F)`}
           >
             <SearchIcon />
           </button>
@@ -81,7 +83,7 @@ export default function HaloNav({
           <button
             className="halo-icon-btn glass"
             onClick={onBack}
-            aria-label="Back"
+            aria-label={t("nav.back")}
           >
             <BackIcon />
           </button>
@@ -95,20 +97,20 @@ export default function HaloNav({
       {/* ── Mobile: bottom tab bar ── */}
       <nav className="halo-tabbar glass" aria-label="Primary">
         <TabBtn
-          label="Home"
+          label={t("nav.home")}
           icon={HomeIcon}
           active={page === "home"}
           onClick={() => onNavigate("home")}
         />
-        <TabBtn label="Search" icon={SearchIcon} onClick={onSearch} />
+        <TabBtn label={t("nav.search")} icon={SearchIcon} onClick={onSearch} />
         <TabBtn
-          label="Library"
+          label={t("nav.library")}
           icon={BookmarkIcon}
           active={page === "history"}
           onClick={() => onNavigate("history")}
         />
         <TabBtn
-          label="Settings"
+          label={t("nav.settings")}
           icon={SettingsIcon}
           active={page === "settings"}
           onClick={() => onNavigate("settings")}

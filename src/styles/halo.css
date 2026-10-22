@@ -1589,3 +1589,255 @@ button {
         animation: none !important;
     }
 }
+
+/* ── Settings (VisionCast) ───────────────────────────────────────────────── */
+.vc-settings {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px var(--page-x) 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.vc-settings__title {
+    margin: 8px 0 8px;
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    color: var(--text);
+}
+
+.vc-card {
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+    border-radius: 24px;
+    padding: 8px 24px;
+}
+
+.vc-card__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 16px 0 4px;
+    font-size: 19px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+.vc-saved {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text3);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.vc-saved.is-on {
+    opacity: 1;
+}
+
+.vc-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 64px;
+    padding: 12px 0;
+    border-top: 1px solid color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.vc-card__title + .vc-row {
+    border-top: 0;
+}
+
+.vc-row__text {
+    min-width: 0;
+}
+
+.vc-row__label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.vc-row__desc {
+    margin-top: 3px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text3);
+}
+
+.vc-row__control {
+    flex-shrink: 0;
+}
+
+.vc-sublabel {
+    padding: 18px 0 2px;
+    border-top: 1px solid color-mix(in srgb, var(--text) 7%, transparent);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text3);
+}
+
+.vc-sublabel + .vc-row {
+    border-top: 0;
+}
+
+.vc-seg {
+    display: inline-flex;
+    padding: 4px;
+    gap: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.vc-seg__btn {
+    height: 40px;
+    min-width: 88px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text2);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s;
+}
+
+.vc-seg__btn:hover {
+    color: var(--text);
+}
+
+.vc-seg__btn.is-active {
+    background: var(--red);
+    color: var(--on-accent);
+}
+
+.vc-switch {
+    position: relative;
+    width: 52px;
+    height: 32px;
+    border: 0;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text) 18%, transparent);
+    cursor: pointer;
+    transition: background 0.25s;
+}
+
+.vc-switch.is-on {
+    background: var(--red);
+}
+
+.vc-switch__knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    transition: transform 0.25s var(--ease), background 0.25s;
+}
+
+.vc-switch.is-on .vc-switch__knob {
+    transform: translateX(20px);
+    background: var(--on-accent);
+}
+
+.vc-select {
+    height: 44px;
+    min-width: 170px;
+    padding: 0 40px 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background-color: color-mix(in srgb, var(--text) 6%, transparent);
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position: calc(100% - 20px) 19px, calc(100% - 15px) 19px;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+.vc-select option {
+    background: var(--surface);
+    color: var(--text);
+}
+
+@media (max-width: 760px) {
+    .vc-settings {
+        padding-top: 4px;
+        gap: 14px;
+    }
+    .vc-card {
+        padding: 4px 16px;
+        border-radius: 22px;
+    }
+    .vc-row {
+        flex-wrap: wrap;
+    }
+    .vc-row:has(.vc-seg),
+    .vc-row:has(.vc-select) {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .vc-seg {
+        display: flex;
+    }
+    .vc-seg__btn {
+        flex: 1;
+        min-width: 0;
+    }
+    .vc-select {
+        width: 100%;
+    }
+}
+
+/* ── Light mode (VisionCast paper) ───────────────────────────────────────── */
+:root[data-theme="halo-light"] {
+    color-scheme: light;
+    --glass-bg: color-mix(in srgb, #ffffff 62%, transparent);
+    --glass-border: rgba(11, 11, 16, 0.1);
+    --glass-hi: rgba(11, 11, 16, 0.08);
+    --glass-shadow: 0 12px 40px rgba(11, 11, 16, 0.12);
+}
+
+:root[data-theme="halo-light"] .halo-ambient img.is-active {
+    opacity: 0.35;
+}
+
+/* Controls that sit on artwork keep the dark glass in both modes */
+.halo-hero .glass,
+.halo-hero .halo-chip {
+    background: rgba(34, 34, 42, 0.55);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+:root[data-theme="halo-light"] .card-badge,
+:root[data-theme="halo-light"] .card-age-badge {
+    color: var(--text);
+}
+
+:root[data-theme="halo-light"] .card-poster,
+:root[data-theme="halo-light"] .halo-wide__frame {
+    box-shadow: 0 10px 30px rgba(11, 11, 16, 0.16);
+}
+
+:root[data-theme="halo-light"] .detail-hero,
+:root[data-theme="halo-light"] .halo-hero {
+    box-shadow: 0 30px 80px rgba(11, 11, 16, 0.22);
+}
