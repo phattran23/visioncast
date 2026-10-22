@@ -7,31 +7,8 @@ import { useRatings, getRatingForItem } from "../utils/useRatings";
 import { isRestricted } from "../utils/ageRating";
 import { storage } from "../utils/storage";
 import { loadHomeLayout, loadHomeViewMode } from "../utils/homeLayout";
-import { useT } from "../utils/i18n";
-
-/**
- * Extract up to `count` unique, recently watched items from the user's
- * history (within the last 30 days).  Returns newest-first and dedupes
- * by TMDB id + media_type so we don't fire duplicate API calls.
- */
-function getRecentHistoryItems(history, count = 5) {
-  if (!history || history.length === 0) return [];
-  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-  const recent = history
-    .filter((h) => h.watchedAt && h.watchedAt > thirtyDaysAgo)
-    .sort((a, b) => b.watchedAt - a.watchedAt);
-
-  const seen = new Set();
-  const unique = [];
-  for (const item of recent) {
-    const key = `${item.media_type || "movie"}_${item.id}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    unique.push(item);
-    if (unique.length >= count) break;
-  }
-  return unique;
-}
+import { useT, useLang } from "../utils/i18n";
+import { buildRecommendations, buildTopGenre } from "../utils/taste";
 
 export default function HomePage({
   trending,
@@ -49,11 +26,17 @@ export default function HomePage({
   apiKey,
   isSaved,
   onToggleSave,
+  saved = [],
 }) {
   const t = useT();
+  const lang = useLang();
 
   const [recommendedItems, setRecommendedItems] = useState([]);
   const [topRatedItems, setTopRatedItems] = useState([]);
+  const [netflixItems, setNetflixItems] = useState([]);
+  const [because, setBecause] = useState(null); // { title, items }
+  const [topGenre, setTopGenre] = useState(null); // { name, items }
+  const [theaterItems, setTheaterItems] = useState([]);
 
   // Load layout config (order + visibility) once on mount
   const [layout] = useState(() => loadHomeLayout());
@@ -69,8 +52,22 @@ export default function HomePage({
       ...trendingTV.map((i) => ({ ...i, media_type: "tv" })),
       ...recommendedItems,
       ...topRatedItems,
+      ...netflixItems,
+      ...theaterItems,
+      ...(because?.items || []),
+      ...(topGenre?.items || []),
     ],
-    [inProgress, trending, trendingTV, recommendedItems, topRatedItems],
+    [
+      inProgress,
+      trending,
+      trendingTV,
+      recommendedItems,
+      topRatedItems,
+      netflixItems,
+      theaterItems,
+      because,
+      topGenre,
+    ],
   );
 
   const { ratingsMap, ageLimitSetting } = useRatings(allItems);
@@ -96,71 +93,24 @@ export default function HomePage({
     return recommendedItems.filter((item) => !itemRestricted(item));
   }, [recommendedItems, itemRestricted]);
 
-  // Fetch personalised recommendations from multiple recent history items
+  // Personalised picks from search, watchlist and watch history (utils/taste)
   useEffect(() => {
-    if (!apiKey || offline || !history || history.length === 0) return;
-    const sources = getRecentHistoryItems(history, 5);
-    if (sources.length === 0) return;
-
-    const controller = new AbortController();
-
-    // Build a Set of already-watched TMDB ids for dedup
-    const watchedIds = new Set(
-      (history || []).map((h) => `${h.media_type || "movie"}_${h.id}`),
-    );
-
-    // For each source, try /recommendations first, fall back to /similar
-    const fetches = sources.map((source) => {
-      const type = source.media_type === "tv" ? "tv" : "movie";
-      return tmdbFetch(`/${type}/${source.id}/recommendations`, apiKey, {
-        signal: controller.signal,
+    if (!apiKey || offline) return;
+    let cancelled = false;
+    buildRecommendations({ apiKey, history: history || [], saved })
+      .then(async ({ items, seeds, because }) => {
+        if (cancelled) return;
+        setRecommendedItems(items);
+        setBecause(because);
+        const genre = await buildTopGenre({ apiKey, seeds });
+        if (!cancelled) setTopGenre(genre);
       })
-        .then((data) => {
-          const results = (data.results || []).map((i) => ({
-            ...i,
-            media_type: type,
-          }));
-          if (results.length > 0) return results;
-          // Fall back to /similar if /recommendations returned nothing
-          return tmdbFetch(`/${type}/${source.id}/similar`, apiKey, {
-            signal: controller.signal,
-          }).then((d) =>
-            (d.results || []).map((i) => ({ ...i, media_type: type })),
-          );
-        })
-        .catch(() => []);
-    });
-
-    Promise.all(fetches)
-      .then((arrays) => {
-        // Interleave results from each source for variety
-        const merged = [];
-        const maxLen = Math.max(...arrays.map((a) => a.length));
-        for (let i = 0; i < maxLen; i++) {
-          for (const arr of arrays) {
-            if (arr[i]) merged.push(arr[i]);
-          }
-        }
-
-        // Deduplicate and filter out already-watched items
-        const seen = new Set();
-        const deduped = merged.filter((item) => {
-          const key = `${item.media_type}_${item.id}`;
-          if (seen.has(key) || watchedIds.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-
-        setRecommendedItems(deduped.slice(0, 20));
-      })
-      .catch((e) => {
-        if (e.name !== "AbortError")
-          console.warn("Recommendations fetch failed", e);
-      });
-
-    return () => controller.abort();
+      .catch((e) => console.warn("Recommendations failed", e));
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiKey, offline, history?.length]);
+  }, [apiKey, offline, history?.length, saved.length, lang]);
 
   // Fetch top rated movies + TV, merge and shuffle
   useEffect(() => {
@@ -195,6 +145,33 @@ export default function HomePage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey, offline]);
 
+  // Movies streaming on Netflix and movies now in cinemas. Cinemas follow the
+  // viewer's region (Vietnam in Vietnamese, otherwise the US); TMDB has no
+  // Netflix availability data for Vietnam, so the Netflix row uses the US
+  // catalogue (titles are still localised).
+  useEffect(() => {
+    if (!apiKey || offline) return;
+    let cancelled = false;
+    const region = lang === "vi" ? "VN" : "US";
+    const asMovies = (d) =>
+      (d.results || [])
+        .filter((i) => i.poster_path)
+        .slice(0, 20)
+        .map((i) => ({ ...i, media_type: "movie" }));
+    tmdbFetch(
+      `/discover/movie?with_watch_providers=8&watch_region=US&with_watch_monetization_types=flatrate&sort_by=popularity.desc`,
+      apiKey,
+    )
+      .then((d) => !cancelled && setNetflixItems(asMovies(d)))
+      .catch(() => {});
+    tmdbFetch(`/movie/now_playing?region=${region}`, apiKey)
+      .then((d) => !cancelled && setTheaterItems(asMovies(d)))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [apiKey, offline, lang]);
+
   // Stable pre-built item arrays for carousels, capped at 10
   const trendingMovieItems = useMemo(
     () => trending.slice(0, 10).map((i) => ({ ...i, media_type: "movie" })),
@@ -204,15 +181,25 @@ export default function HomePage({
     () => trendingTV.slice(0, 10).map((i) => ({ ...i, media_type: "tv" })),
     [trendingTV],
   );
-  // Hero: top trending movies and series, interleaved
+  // Hero: up to 3 personalised picks (with artwork) first, then trending
   const heroItems = useMemo(() => {
     const out = [];
-    for (let i = 0; out.length < 5 && i < 5; i++) {
-      if (trendingMovieItems[i]) out.push(trendingMovieItems[i]);
-      if (i < 2 && trendingTVItems[i]) out.push(trendingTVItems[i]);
+    const seen = new Set();
+    const push = (item, forYou) => {
+      const k = `${item.media_type}_${item.id}`;
+      if (seen.has(k) || !item.backdrop_path) return;
+      seen.add(k);
+      out.push(forYou ? { ...item, _forYou: true } : item);
+    };
+    filteredRecommendedItems.slice(0, 8).forEach((i) => {
+      if (out.length < 3) push(i, true);
+    });
+    for (let i = 0; out.length < 5 && i < 6; i++) {
+      if (trendingMovieItems[i]) push(trendingMovieItems[i]);
+      if (out.length < 5 && i < 2 && trendingTVItems[i]) push(trendingTVItems[i]);
     }
     return out.slice(0, 5);
-  }, [trendingMovieItems, trendingTVItems]);
+  }, [filteredRecommendedItems, trendingMovieItems, trendingTVItems]);
 
   // Poster rail (default view) or flat grid ("list" view)
   const renderRow = (key, title, items) => {
@@ -324,18 +311,44 @@ export default function HomePage({
           );
         }
 
-        if (id === "recommended")
-          return renderRow(
-            "recommended",
-            t("home.recommended"),
-            filteredRecommendedItems,
+        if (id === "recommended") {
+          // Leave out titles already shown in "Because you searched …"
+          const inBecause = new Set(
+            (because?.items || []).map((i) => `${i.media_type}_${i.id}`),
           );
+          const rest = filteredRecommendedItems.filter(
+            (i) => !inBecause.has(`${i.media_type}_${i.id}`),
+          );
+          return rest.length >= 6
+            ? renderRow("recommended", t("home.recommended"), rest)
+            : null;
+        }
         if (id === "trendingMovies")
           return renderRow("trendingMovies", t("home.trendingMovies"), trendingMovieItems);
         if (id === "trendingTV")
           return renderRow("trendingTV", t("home.trendingTV"), trendingTVItems);
         if (id === "topRated")
           return renderRow("topRated", t("home.topRated"), topRatedItems);
+        if (id === "becauseSearched")
+          return because
+            ? renderRow(
+                "becauseSearched",
+                t("home.becauseSearched", { title: because.title }),
+                because.items.filter((i) => !itemRestricted(i)),
+              )
+            : null;
+        if (id === "topGenre")
+          return topGenre
+            ? renderRow(
+                "topGenre",
+                t("home.topGenre", { genre: topGenre.name.toLowerCase() }),
+                topGenre.items.filter((i) => !itemRestricted(i)),
+              )
+            : null;
+        if (id === "netflix")
+          return renderRow("netflix", t("home.netflix"), netflixItems);
+        if (id === "inTheaters")
+          return renderRow("inTheaters", t("home.inTheaters"), theaterItems);
 
         return null;
       })}

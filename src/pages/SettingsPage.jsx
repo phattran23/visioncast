@@ -16,6 +16,12 @@ import {
   saveHomeViewMode,
 } from "../utils/homeLayout";
 import { LANGUAGES, LANG_EVENT, useT, useLang } from "../utils/i18n";
+import {
+  getAuthMode,
+  getAccount,
+  signOut,
+  showAuthScreen,
+} from "../utils/account";
 
 // VisionCast settings: one short page of instant-apply controls.
 
@@ -214,9 +220,50 @@ export default function SettingsPage() {
 
   const saved = t("settings.saved");
 
+  // Account
+  const account = getAuthMode() === "user" ? getAccount() : null;
+  const [signingOut, setSigningOut] = useState(false);
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    await signOut();
+    window.location.reload();
+  };
+  const handleSignIn = () => {
+    showAuthScreen();
+    window.dispatchEvent(new CustomEvent("visioncast:auth-changed"));
+  };
+
   return (
     <div className="vc-settings fade-in">
       <h1 className="vc-settings__title">{t("settings.title")}</h1>
+
+      <section className="vc-card vc-account">
+        <div className="vc-account__avatar" aria-hidden="true">
+          {account ? (account.name || "?").trim().charAt(0).toUpperCase() : "?"}
+        </div>
+        <div className="vc-account__text">
+          <div className="vc-account__name">
+            {account ? t("account.signedIn", { name: account.name }) : t("account.guest")}
+          </div>
+          <div className="vc-row__desc">
+            {account ? `${account.email} · ${t("account.synced")}` : t("account.guestDesc")}
+          </div>
+        </div>
+        {account ? (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleSignOut}
+            disabled={signingOut}
+          >
+            {t("account.signOut")}
+          </button>
+        ) : (
+          <button type="button" className="btn btn-primary" onClick={handleSignIn}>
+            {t("account.signInOrCreate")}
+          </button>
+        )}
+      </section>
 
       <Card title={t("settings.general")} saved={generalSaved} savedLabel={saved}>
         <Row label={t("settings.language")} desc={t("settings.languageDesc")}>

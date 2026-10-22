@@ -105,7 +105,7 @@ export default function HaloHero({ items, onSelect, isSaved, onToggleSave }) {
               aria-hidden={!on}
             >
               <span className="halo-chip glass">
-                {t("hero.trending")} · {s.media_type === "tv" ? t("media.series") : t("media.movie")}
+                {s._forYou ? t("hero.forYou") : t("hero.trending")} · {s.media_type === "tv" ? t("media.series") : t("media.movie")}
               </span>
               <h1 className="halo-hero__title">{title}</h1>
               {s.overview && <p className="halo-hero__line">{s.overview}</p>}

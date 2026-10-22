@@ -6,6 +6,8 @@ export default defineConfig(({ mode }) => {
   const isProd = mode === "production";
   return {
     plugins: [react()],
+    // `npm run dev` + `npx wrangler dev` (port 8787) for the account API
+    server: { proxy: { "/api": "http://127.0.0.1:8787" } },
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
     },

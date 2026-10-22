@@ -64,6 +64,17 @@ Install (Chrome, Edge, Brave, Opera):
 
 Not supported in Firefox without packaging and signing the extension.
 
+## Accounts
+
+Sign in / sign up / guest (`src/components/AuthScreen.jsx`). The Worker in
+`worker/index.js` serves the site and a small API on Cloudflare D1
+(`visioncast` database): PBKDF2-hashed passwords, HttpOnly session cookies,
+and per-user sync of watchlist, history, progress, search picks and settings
+(`src/utils/account.js`). Guests keep everything in the browser.
+
+Local testing: `npm run build && npx wrangler dev` (http://127.0.0.1:8787),
+or `npm run dev` with `wrangler dev` running for the `/api` proxy.
+
 ## Deploy (Cloudflare)
 
 Live at https://visioncast.trantienphat-ftu2.workers.dev, served by Cloudflare

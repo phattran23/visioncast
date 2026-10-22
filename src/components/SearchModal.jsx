@@ -3,6 +3,7 @@ import { tmdbFetch, imgUrl } from "../utils/api";
 import { SearchIcon, CloseIcon } from "./Icons";
 import { storage } from "../utils/storage";
 import { useT } from "../utils/i18n";
+import { recordSearchPick } from "../utils/taste";
 
 const HISTORY_KEY = "searchHistory";
 const MAX_HISTORY = 12;
@@ -94,6 +95,7 @@ export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
       saveHistory(next);
       setHistory(next);
     }
+    recordSearchPick(r, trimmed);
     onSelect(r);
     onClose();
   };

@@ -2,6 +2,14 @@
 
 const PREFIX = "streambert_";
 
+// Write listeners (used by account sync to push changed keys)
+const _writeListeners = new Set();
+export function onStorageWrite(cb) {
+  _writeListeners.add(cb);
+  return () => _writeListeners.delete(cb);
+}
+const _notify = (key) => _writeListeners.forEach((cb) => cb(key));
+
 export const storage = {
   get(key) {
     try {
@@ -15,11 +23,13 @@ export const storage = {
     try {
       localStorage.setItem(PREFIX + key, JSON.stringify(value));
     } catch {}
+    _notify(key);
   },
   remove(key) {
     try {
       localStorage.removeItem(PREFIX + key);
     } catch {}
+    _notify(key);
   },
   // Remove all streambert_ keys (used by reset)
   clearAll() {

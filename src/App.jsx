@@ -35,6 +35,8 @@ import {
 
 import HaloNav from "./components/HaloNav";
 import { useLang } from "./utils/i18n";
+import AuthScreen from "./components/AuthScreen";
+import { getAuthMode, startSync } from "./utils/account";
 import SearchModal from "./components/SearchModal";
 import SetupScreen from "./components/SetupScreen";
 import CloseConfirmModal from "./components/CloseConfirmModal";
@@ -54,6 +56,15 @@ export default function App() {
   useEffect(() => {
     document.documentElement.lang = uiLang;
   }, [uiLang]);
+
+  // Account: "user" | "guest" | null (show the sign-in screen)
+  const [authMode, setAuthMode] = useState(getAuthMode);
+  useEffect(() => {
+    const onChange = () => setAuthMode(getAuthMode());
+    window.addEventListener("visioncast:auth-changed", onChange);
+    return () => window.removeEventListener("visioncast:auth-changed", onChange);
+  }, []);
+  useEffect(() => (authMode === "user" ? startSync() : undefined), [authMode]);
   // apiKey loaded async from secure storage (OS keychain)
   const [apiKey, setApiKey] = useState(null);
   const [apiKeyLoaded, setApiKeyLoaded] = useState(false);
@@ -970,6 +981,16 @@ export default function App() {
   );
 
   if (!apiKeyLoaded) return null; // wait for secure storage to resolve
+  if (!authMode)
+    return (
+      <AuthScreen
+        apiKey={apiKey}
+        onDone={(mode) =>
+          // A signed-in account may bring its own data: reload to start fresh
+          mode === "user" ? window.location.reload() : setAuthMode(mode)
+        }
+      />
+    );
   if (!apiKey && !skipped)
     return <SetupScreen onSave={saveApiKey} onSkip={() => setSkipped(true)} />;
 
@@ -1055,6 +1076,7 @@ export default function App() {
                 apiKey={apiKey}
                 isSaved={isSaved}
                 onToggleSave={toggleSave}
+                saved={savedList}
               />
             )}
             {page === "movie" && selected && (
