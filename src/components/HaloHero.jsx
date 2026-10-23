@@ -7,7 +7,7 @@ import { useT } from "../utils/i18n";
 // a blurred copy of the current artwork glowing behind the page ("ambient").
 // Phones get the portrait poster, wider screens the landscape backdrop.
 
-const INTERVAL = 7000;
+const INTERVAL = 11000; // time each featured title stays on screen
 
 const PlusIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">

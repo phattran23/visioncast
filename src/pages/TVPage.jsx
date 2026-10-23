@@ -416,6 +416,7 @@ export default function TVPage({
   downloads,
   onGoToDownloads,
   onEpisodeChange,
+  onPlayingChange,
 }) {
   const t = useT();
   const [details, setDetails] = useState(null);
@@ -426,6 +427,14 @@ export default function TVPage({
   );
   const [selectedEp, setSelectedEp] = useState(null);
   const [playing, setPlaying] = useState(false);
+  // Tell App whether the player is running (keeps it alive as a mini player
+  // when the user browses elsewhere)
+  const onPlayingChangeRef = useRef(onPlayingChange);
+  onPlayingChangeRef.current = onPlayingChange;
+  useEffect(() => {
+    onPlayingChangeRef.current?.(playing);
+  }, [playing]);
+  useEffect(() => () => onPlayingChangeRef.current?.(false), []);
   const [loading, setLoading] = useState(true);
   const [loadingSeason, setLoadingSeason] = useState(false);
   const [showDownload, setShowDownload] = useState(false);

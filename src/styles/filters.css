@@ -1,0 +1,644 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Brand bar (logo top left) + Films / Series filters
+   Design: "VisionCast — Films & Series filters"
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Brand bar ───────────────────────────────────────────────────────────── */
+.vc-brandbar {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    padding: 12px var(--page-x) 8px;
+}
+
+.vc-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.vc-brand__mark {
+    width: 40px;
+    height: 40px;
+    color: var(--text);
+}
+
+:root:not([data-theme="halo-light"]) .vc-brand__mark {
+    color: #f4f1ea;
+}
+
+/* The back button sits in the brand bar now, not floating */
+.vc-brandbar .vc-back {
+    position: static;
+    flex-shrink: 0;
+}
+
+/* The page starts under the brand bar */
+.main {
+    padding-top: 0 !important;
+}
+
+.halo-hero-wrap {
+    padding-top: 0;
+}
+
+.halo-ambient {
+    top: -120px;
+}
+
+@media (max-width: 760px) {
+    .vc-brandbar {
+        min-height: 52px;
+        padding: max(10px, env(safe-area-inset-top)) 16px 6px;
+        gap: 10px;
+    }
+    .vc-brand {
+        font-size: 23px;
+        gap: 9px;
+    }
+    .vc-brand__mark {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* ── Browse page shell ───────────────────────────────────────────────────── */
+.vc-browse {
+    position: relative;
+    padding-bottom: 24px;
+}
+
+.vc-browse__ambient {
+    position: absolute;
+    left: -10%;
+    right: -10%;
+    top: -180px;
+    height: 620px;
+    overflow: hidden;
+    filter: blur(90px) saturate(1.6);
+    opacity: 0.38;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.vc-browse__ambient img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.vc-browse__head {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    padding: 40px var(--page-x) 32px;
+    animation: halo-rise 0.8s var(--ease) backwards;
+}
+
+.vc-browse__head h1 {
+    margin: 0;
+    font-size: clamp(52px, 7vw, 88px);
+    line-height: 0.95;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    color: var(--text);
+}
+
+.vc-browse__head p {
+    margin: 12px 0 0;
+    font-size: 18px;
+    color: var(--text3);
+}
+
+.vc-browse__filters {
+    position: sticky;
+    top: 12px;
+    z-index: 30;
+    padding: 0 var(--page-x);
+}
+
+/* An open panel sits above the dock (z 230) and the mini player */
+.vc-browse__filters:has(.vc-fpanel) {
+    z-index: 240;
+}
+
+.vc-browse .halo-section:first-of-type {
+    padding-top: 20px;
+}
+
+/* ── Filter bar ──────────────────────────────────────────────────────────── */
+.vc-fbar {
+    position: relative;
+    /* backdrop-filter makes the bar its own stacking context: lift it (and
+       its panels) above the click-away scrim */
+    z-index: 31;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 8px 8px 18px;
+    border-radius: 30px;
+    background: rgba(30, 30, 38, 0.55) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(1.7);
+    backdrop-filter: blur(28px) saturate(1.7);
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+    color: #fff;
+}
+
+:root[data-theme="halo-light"] .vc-fbar {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border-color: rgba(11, 11, 16, 0.1) !important;
+    box-shadow: 0 20px 60px rgba(11, 11, 16, 0.12) !important;
+    color: var(--text);
+}
+
+.vc-fbar__label {
+    margin-right: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, currentColor 65%, transparent);
+}
+
+.vc-fbar__reset {
+    padding: 0 10px !important;
+    font-size: 14px !important;
+    opacity: 0.85;
+}
+
+.vc-fbar__count {
+    margin-left: auto;
+    padding-right: 14px;
+    font-size: 15px;
+    color: color-mix(in srgb, currentColor 75%, transparent);
+}
+
+.vc-trig {
+    position: relative;
+    height: 44px;
+    padding: 0 14px 0 18px;
+    border-radius: 22px;
+    border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    background: color-mix(in srgb, currentColor 6%, transparent);
+    color: inherit;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.25s, border-color 0.25s, transform 0.3s cubic-bezier(0.3, 1.5, 0.45, 1);
+}
+
+.vc-trig:hover {
+    background: color-mix(in srgb, currentColor 12%, transparent);
+    transform: translateY(-1px);
+}
+
+.vc-trig:active {
+    transform: scale(0.97);
+}
+
+.vc-trig[aria-expanded="true"] {
+    background: color-mix(in srgb, currentColor 18%, transparent);
+    border-color: color-mix(in srgb, currentColor 36%, transparent);
+}
+
+.vc-trig__chev {
+    transition: transform 0.5s cubic-bezier(0.3, 1.5, 0.45, 1);
+}
+
+.vc-trig[aria-expanded="true"] .vc-trig__chev {
+    transform: rotate(180deg);
+}
+
+.vc-trig__badge {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 11px;
+    background: var(--signal);
+    color: #0b0b10;
+    font-size: 12px;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    animation: vc-fpop 0.4s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+.vc-fpanel {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 0;
+    z-index: 31;
+    width: min(560px, 100%);
+    border-radius: 28px;
+    padding: 22px;
+    /* Nearly opaque: a backdrop blur can't work inside the (already
+       blurred) bar, so the panel must hide the grid behind it on its own */
+    background: rgba(20, 20, 28, 0.97);
+    -webkit-backdrop-filter: blur(40px) saturate(1.8);
+    backdrop-filter: blur(40px) saturate(1.8);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    color: #fff;
+    transform-origin: top left;
+    animation: vc-fdrop 0.6s cubic-bezier(0.22, 1.1, 0.36, 1);
+}
+
+.vc-fpanel--country {
+    width: min(820px, 100%);
+}
+
+.vc-fpanel--sort {
+    width: min(280px, 100%);
+    padding: 12px;
+}
+
+@keyframes vc-fdrop {
+    from {
+        opacity: 0;
+        transform: translateY(-16px) scale(0.97);
+        clip-path: inset(0 0 100% 0 round 28px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+        clip-path: inset(0 0 0 0 round 28px);
+    }
+}
+
+@keyframes vc-fpop {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.9);
+    }
+}
+
+.vc-fpanel__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-height: min(52vh, 420px);
+    overflow-y: auto;
+}
+
+.vc-gpill {
+    height: 46px;
+    padding: 0 18px 0 16px;
+    border-radius: 23px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    animation: vc-fpop 0.45s cubic-bezier(0.22, 1.1, 0.36, 1) backwards;
+    transition: background 0.25s, border-color 0.25s, transform 0.3s cubic-bezier(0.3, 1.5, 0.45, 1);
+}
+
+.vc-gpill:hover {
+    transform: translateY(-2px);
+}
+
+.vc-gpill:active {
+    transform: scale(0.96);
+}
+
+.vc-gpill__dot {
+    flex: 0 0 10px;
+    height: 10px;
+    border-radius: 5px;
+}
+
+.vc-gpill.is-on,
+.vc-crow.is-on {
+    background: rgba(255, 90, 54, 0.16);
+    border-color: rgba(255, 90, 54, 0.7);
+}
+
+.vc-fchk {
+    margin-left: 2px;
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity 0.25s, transform 0.4s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+
+.is-on > .vc-fchk {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.vc-fpanel__regions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+    gap: 22px 18px;
+    max-height: min(56vh, 480px);
+    overflow-y: auto;
+}
+
+.vc-fpanel__region {
+    margin: 0 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.vc-fpanel__list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vc-crow {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    cursor: pointer;
+    animation: vc-fpop 0.45s cubic-bezier(0.22, 1.1, 0.36, 1) backwards;
+    transition: background 0.25s, border-color 0.25s, transform 0.3s cubic-bezier(0.3, 1.5, 0.45, 1);
+}
+
+.vc-crow:hover {
+    transform: translateX(3px);
+}
+
+.vc-crow:active {
+    transform: scale(0.97);
+}
+
+.vc-crow .vc-fchk {
+    margin-left: auto;
+}
+
+.vc-crow__code {
+    flex: 0 0 28px;
+    height: 28px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.12);
+    display: grid;
+    place-items: center;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.vc-fpanel__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.vc-flink {
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.vc-fshow {
+    height: 44px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 22px;
+    background: var(--signal);
+    color: #0b0b10;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.25s var(--ease);
+}
+
+.vc-fshow:hover {
+    transform: translateY(-1px) scale(1.02);
+}
+
+.vc-fbar__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    border: 0;
+    background: transparent;
+    cursor: default;
+}
+
+/* ── Active filter chips ─────────────────────────────────────────────────── */
+.vc-fchips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 34px;
+    margin-top: 16px;
+}
+
+.vc-fchip {
+    height: 34px;
+    padding: 0 8px 0 14px;
+    border-radius: 17px;
+    border: 1px solid color-mix(in srgb, var(--text) 20%, transparent);
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    animation: vc-fpop 0.4s cubic-bezier(0.22, 1.1, 0.36, 1) backwards;
+}
+
+.vc-fchip:hover {
+    background: color-mix(in srgb, var(--text) 16%, transparent);
+}
+
+/* ── Results ─────────────────────────────────────────────────────────────── */
+.vc-results {
+    position: relative;
+    z-index: 1;
+    padding: 28px var(--page-x) 0;
+}
+
+.vc-results__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr));
+    gap: 30px 22px;
+}
+
+.vc-results__grid--wide {
+    grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+}
+
+.vc-results__cell {
+    min-width: 0;
+    animation: halo-rise 0.7s var(--ease) backwards;
+}
+
+.vc-results__grid--wide .halo-wide {
+    width: 100%;
+}
+
+.vc-results__empty {
+    border-radius: 28px;
+    padding: 56px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    color: var(--text);
+}
+
+.vc-results__empty-title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.vc-results__empty-sub {
+    font-size: 15px;
+    color: var(--text3);
+}
+
+.vc-results__more {
+    display: flex;
+    justify-content: center;
+    padding: 28px 0 32px;
+}
+
+/* ── Phones ──────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+    .vc-browse__head {
+        padding: 24px 16px 22px;
+    }
+    .vc-browse__head h1 {
+        font-size: 44px;
+    }
+    .vc-browse__head p {
+        font-size: 15px;
+    }
+    .vc-browse__filters {
+        top: 8px;
+        padding: 0 12px;
+    }
+    .vc-fbar {
+        gap: 8px;
+        padding: 6px;
+        border-radius: 26px;
+    }
+    .vc-fbar__label {
+        display: none;
+    }
+    .vc-trig {
+        height: 40px;
+        padding: 0 10px 0 12px;
+        gap: 7px;
+        font-size: 14px;
+    }
+    .vc-fbar__count {
+        width: 100%;
+        margin: 0;
+        padding: 0 10px 4px;
+        font-size: 13px;
+    }
+    .vc-fbar__reset {
+        min-height: 40px;
+    }
+    .vc-fpanel,
+    .vc-fpanel--country,
+    .vc-fpanel--sort {
+        width: 100%;
+        padding: 16px;
+        border-radius: 24px;
+    }
+    .vc-gpill {
+        height: 40px;
+        padding: 0 14px 0 12px;
+        font-size: 14px;
+    }
+    .vc-fpanel__regions {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 10px;
+    }
+    .vc-crow {
+        font-size: 14px;
+        gap: 8px;
+        padding: 0 8px;
+    }
+    .vc-fchips {
+        margin-top: 12px;
+    }
+    .vc-results {
+        padding: 18px 16px 0;
+    }
+    .vc-results__grid {
+        grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+        gap: 20px 10px;
+    }
+    .vc-results__grid--wide {
+        grid-template-columns: 1fr;
+        gap: 22px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vc-fpanel,
+    .vc-gpill,
+    .vc-crow,
+    .vc-fchip,
+    .vc-trig__badge,
+    .vc-results__cell,
+    .vc-browse__head {
+        animation: none !important;
+    }
+}
+
+/* "Mark progress" (25/50/75/100%) buttons under the player: hidden in VisionCast */
+.progress-mark-row {
+    display: none !important;
+}

@@ -32,6 +32,7 @@ const PREF_KEYS = [
   "startPage",
   "librarySort",
   "historyEnabled",
+  "subtitleLang",
 ];
 const SYNC_KEYS = [...PERSONAL_KEYS, ...PREF_KEYS];
 

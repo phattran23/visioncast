@@ -232,7 +232,7 @@ export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
 
           {!query && history.length === 0 && (
             <div className="search-hint">
-              Search for movies and series &nbsp;·&nbsp; <kbd>ESC</kbd> to close
+              {t("search.hint")} &nbsp;·&nbsp; <kbd>ESC</kbd> {t("search.escClose")}
             </div>
           )}
         </div>

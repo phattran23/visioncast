@@ -8,14 +8,14 @@ import {
   getAppearanceMode,
   DEFAULT_THEME,
 } from "../utils/appearance";
+import { loadHomeViewMode, saveHomeViewMode } from "../utils/homeLayout";
 import {
-  HOME_ROWS,
-  loadHomeLayout,
-  saveHomeLayout,
-  loadHomeViewMode,
-  saveHomeViewMode,
-} from "../utils/homeLayout";
-import { LANGUAGES, LANG_EVENT, useT, useLang } from "../utils/i18n";
+  LANGUAGES,
+  LANG_EVENT,
+  useT,
+  useLang,
+  getSubtitleLang,
+} from "../utils/i18n";
 import {
   getAuthMode,
   getAccount,
@@ -139,12 +139,23 @@ export default function SettingsPage() {
     getAppearanceMode(storage.get(STORAGE_KEYS.THEME) || DEFAULT_THEME),
   );
   const [generalSaved, flashGeneral] = useFlash();
+  const [subLang, setSubLang] = useState(getSubtitleLang);
 
   const changeLang = (id) => {
     const l = LANGUAGES.find((x) => x.id === id);
     storage.set(STORAGE_KEYS.TMDB_LANG, l.tmdb);
+    // Subtitles default to the chosen language
+    storage.set(STORAGE_KEYS.SUBTITLE_LANG, id);
+    setSubLang(id);
     clearTmdbCache();
     window.dispatchEvent(new CustomEvent(LANG_EVENT));
+    flashGeneral();
+  };
+
+  const changeSubLang = (id) => {
+    storage.set(STORAGE_KEYS.SUBTITLE_LANG, id);
+    setSubLang(id);
+    window.dispatchEvent(new CustomEvent("streambert:player-settings-changed"));
     flashGeneral();
   };
 
@@ -172,18 +183,11 @@ export default function SettingsPage() {
   };
 
   // Home page
-  const [layout, setLayout] = useState(() => loadHomeLayout());
   const [viewMode, setViewMode] = useState(() => loadHomeViewMode());
   const [startPage, setStartPage] = useState(
     () => storage.get(STORAGE_KEYS.START_PAGE) || "home",
   );
   const [homeSaved, flashHome] = useFlash();
-  const toggleRow = (id, on) => {
-    const visible = { ...layout.visible, [id]: on };
-    saveHomeLayout(layout.order, visible);
-    setLayout({ ...layout, visible });
-    flashHome();
-  };
   const changeView = (v) => {
     saveHomeViewMode(v);
     setViewMode(v);
@@ -274,6 +278,14 @@ export default function SettingsPage() {
             onChange={changeLang}
           />
         </Row>
+        <Row label={t("settings.subtitles")} desc={t("settings.subtitlesDesc")}>
+          <Segmented
+            label={t("settings.subtitles")}
+            value={subLang}
+            options={LANGUAGES.map((l) => ({ value: l.id, label: l.label }))}
+            onChange={changeSubLang}
+          />
+        </Row>
         <Row label={t("settings.appearance")}>
           <Segmented
             label={t("settings.appearance")}
@@ -328,16 +340,6 @@ export default function SettingsPage() {
             onChange={changeView}
           />
         </Row>
-        <div className="vc-sublabel">{t("settings.homeRows")}</div>
-        {HOME_ROWS.map((r) => (
-          <Row key={r.id} label={t(`row.${r.id}`)}>
-            <Switch
-              label={t(`row.${r.id}`)}
-              checked={!!layout.visible[r.id]}
-              onChange={(on) => toggleRow(r.id, on)}
-            />
-          </Row>
-        ))}
       </Card>
 
       <Card title={t("settings.library")} saved={libSaved} savedLabel={saved}>

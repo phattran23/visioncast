@@ -33,8 +33,9 @@ import {
   clearActivity as clearDiscordActivity,
 } from "./utils/discordPresence";
 
-import HaloNav from "./components/HaloNav";
-import { useLang } from "./utils/i18n";
+import VisionDock from "./components/VisionDock";
+import { VisionCastMark, VisionCastWordmark, BackIcon } from "./components/Icons";
+import { useLang, getSubtitleLang, LANG_EVENT } from "./utils/i18n";
 import AuthScreen from "./components/AuthScreen";
 import { getAuthMode, startSync } from "./utils/account";
 import SearchModal from "./components/SearchModal";
@@ -50,6 +51,7 @@ const TVPage = lazy(() => import("./pages/TVPage"));
 const LibraryPage = lazy(() => import("./pages/LibraryPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const DownloadsPage = lazy(() => import("./pages/DownloadsPage"));
+const BrowsePage = lazy(() => import("./pages/BrowsePage"));
 
 export default function App() {
   const uiLang = useLang();
@@ -111,7 +113,7 @@ export default function App() {
     const accentHex = inPlayer
       ? (ACCENT_PRESETS.find((p) => p.id === accentId)?.color ?? null)
       : null;
-    const subtitleLang = storage.get(STORAGE_KEYS.SUBTITLE_LANG) || null;
+    const subtitleLang = getSubtitleLang();
     return { accentColor: accentHex, subtitleLang };
   };
   const [playerSettings, setPlayerSettings] = useState(readPlayerSettings);
@@ -573,8 +575,11 @@ export default function App() {
   useEffect(() => {
     const handler = () => setPlayerSettings(readPlayerSettings());
     window.addEventListener("streambert:player-settings-changed", handler);
-    return () =>
+    window.addEventListener(LANG_EVENT, handler);
+    return () => {
       window.removeEventListener("streambert:player-settings-changed", handler);
+      window.removeEventListener(LANG_EVENT, handler);
+    };
   }, []);
 
   // ── Discord Rich Presence: sync settings + connect/disconnect ─────────────
@@ -688,6 +693,67 @@ export default function App() {
     if (typeof gc === "function") {
       requestIdleCallback(() => gc(), { timeout: 2000 });
     }
+  }, []);
+
+  // ── Title pages & mini player ─────────────────────────────────────────────
+  // Movie/TV pages are rendered from a stable keyed list instead of directly
+  // by `page`. When the user leaves a title whose player is running, its entry
+  // stays mounted and is shown as a floating mini player, so the video keeps
+  // playing (the iframe is never moved or reloaded) while they browse.
+  const isTitlePage = (pg) => pg === "movie" || pg === "tv";
+  const currentTitleKey =
+    isTitlePage(page) && selected ? `${page}_${selected.id}` : null;
+  const [titles, setTitles] = useState([]); // [{ key, page, selected }]
+  const [playingKey, setPlayingKey] = useState(null);
+  useEffect(() => {
+    setTitles((prev) => {
+      let next = prev.filter(
+        (e) => e.key === currentTitleKey || e.key === playingKey,
+      );
+      if (currentTitleKey && !next.some((e) => e.key === currentTitleKey))
+        next = [...next, { key: currentTitleKey, page, selected }];
+      return next.length === prev.length && next.every((e, i) => e === prev[i])
+        ? prev
+        : next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTitleKey, playingKey]);
+  const titlePlaying = useCallback(
+    (key) => (on) =>
+      setPlayingKey((cur) => (on ? key : cur === key ? null : cur)),
+    [],
+  );
+
+  // Each page starts at the top; reopening a title that is still playing
+  // scrolls straight to its player (VidSrc pauses when its player is off-screen)
+  useEffect(() => {
+    const main = document.querySelector(".main");
+    if (!main) return;
+    if (currentTitleKey && currentTitleKey === playingKey) {
+      requestAnimationFrame(() =>
+        main
+          .querySelector(":scope > div:not(.vc-mini-host) .player-wrap")
+          ?.scrollIntoView({ block: "center" }),
+      );
+    } else {
+      main.scrollTo({ top: 0 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, selected]);
+
+  // Hide the dock while a video is full screen
+  useEffect(() => {
+    const onFs = () =>
+      document.body.classList.toggle(
+        "vc-fullscreen",
+        !!(document.fullscreenElement || document.webkitFullscreenElement),
+      );
+    document.addEventListener("fullscreenchange", onFs);
+    document.addEventListener("webkitfullscreenchange", onFs);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFs);
+      document.removeEventListener("webkitfullscreenchange", onFs);
+    };
   }, []);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
@@ -980,6 +1046,30 @@ export default function App() {
     [navigate],
   );
 
+  // Props for a movie/TV page entry in the title list
+  const titleProps = (t) => ({
+    item: t.selected,
+    apiKey,
+    playerSettings,
+    onSave: () => toggleSave(t.selected),
+    isSaved: isSaved(t.selected),
+    onHistory: addHistory,
+    progress,
+    saveProgress,
+    onBack: () => navigate("home"),
+    onSettings: (section) => navigate("settings", { section: section || null }),
+    onDownloadStarted: handleDownloadStarted,
+    watched,
+    onMarkWatched: markWatched,
+    onMarkUnwatched: markUnwatched,
+    downloads,
+    onGoToDownloads: handleGoToDownloads,
+    ...(t.page === "tv"
+      ? { onEpisodeChange: setWatchingEpisode }
+      : { onSelect: handleSelectResult }),
+    onPlayingChange: titlePlaying(t.key),
+  });
+
   if (!apiKeyLoaded) return null; // wait for secure storage to resolve
   if (!authMode)
     return (
@@ -1001,20 +1091,45 @@ export default function App() {
       {hasCustomTitlebar && <WindowTitlebar />}
       <div>
         <div className="main">
-          <HaloNav
+          <VisionDock
             page={page}
             onNavigate={(...args) => {
               setShowSearch(false);
               navigate(...args);
             }}
             onSearch={() => setShowSearch((v) => !v)}
-            canGoBack={navStack.length > 0}
-            onBack={() => {
-              setShowSearch(false);
-              navigateBack();
-            }}
             searchOpen={showSearch}
           />
+
+          {/* Brand bar: back (when possible) + VisionCast logo, top left */}
+          <header className="vc-brandbar">
+            {navStack.length > 0 && (
+              <button
+                className="vc-back glass"
+                onClick={() => {
+                  setShowSearch(false);
+                  navigateBack();
+                }}
+                aria-label={uiLang === "vi" ? "Quay lại" : "Back"}
+                title="Ctrl+Z"
+              >
+                <BackIcon />
+              </button>
+            )}
+            <button
+              className="vc-brand"
+              onClick={() => {
+                setShowSearch(false);
+                navigate("home");
+              }}
+              aria-label="VisionCast home"
+            >
+              <span className="vc-brand__mark">
+                <VisionCastMark animated />
+              </span>
+              <VisionCastWordmark />
+            </button>
+          </header>
 
           {/* ── API key status banner ── */}
           {/* Suspense boundary: lazy page chunks are fetched on first visit */}
@@ -1079,50 +1194,49 @@ export default function App() {
                 saved={savedList}
               />
             )}
-            {page === "movie" && selected && (
-              <MoviePage
-                item={selected}
+            {titles
+              .filter((t) => t.key === currentTitleKey || t.key === playingKey)
+              .map((t) => {
+              const isMini = t.key !== currentTitleKey;
+              const Page = t.page === "tv" ? TVPage : MoviePage;
+              return (
+                <div key={t.key} className={isMini ? "vc-mini-host" : undefined}>
+                  {isMini && (
+                    <div className="vc-mini-bar">
+                      <span className="vc-mini-title">
+                        {t.selected.title || t.selected.name}
+                      </span>
+                      <button
+                        className="vc-mini-btn"
+                        onClick={() => navigate(t.page, t.selected)}
+                        aria-label="Open player"
+                        title="Open"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7" /></svg>
+                      </button>
+                      <button
+                        className="vc-mini-btn"
+                        onClick={() => setPlayingKey(null)}
+                        aria-label="Close player"
+                        title="Close"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                      </button>
+                    </div>
+                  )}
+                  <Page {...titleProps(t)} />
+                </div>
+              );
+            })}
+            {(page === "films" || page === "series") && (
+              <BrowsePage
+                key={page}
+                type={page === "series" ? "tv" : "movie"}
                 apiKey={apiKey}
-                playerSettings={playerSettings}
-                onSave={() => toggleSave(selected)}
-                isSaved={isSaved(selected)}
-                onHistory={addHistory}
-                progress={progress}
-                saveProgress={saveProgress}
-                onBack={() => navigate("home")}
-                onSettings={(section) =>
-                  navigate("settings", { section: section || null })
-                }
-                onDownloadStarted={handleDownloadStarted}
-                watched={watched}
-                onMarkWatched={markWatched}
-                onMarkUnwatched={markUnwatched}
-                downloads={downloads}
-                onGoToDownloads={handleGoToDownloads}
                 onSelect={handleSelectResult}
-              />
-            )}
-            {page === "tv" && selected && (
-              <TVPage
-                item={selected}
-                apiKey={apiKey}
-                playerSettings={playerSettings}
-                onSave={() => toggleSave(selected)}
-                isSaved={isSaved(selected)}
-                onHistory={addHistory}
-                progress={progress}
-                saveProgress={saveProgress}
-                onBack={() => navigate("home")}
-                onSettings={(section) =>
-                  navigate("settings", { section: section || null })
-                }
-                onDownloadStarted={handleDownloadStarted}
                 watched={watched}
                 onMarkWatched={markWatched}
                 onMarkUnwatched={markUnwatched}
-                downloads={downloads}
-                onGoToDownloads={handleGoToDownloads}
-                onEpisodeChange={setWatchingEpisode}
               />
             )}
             {page === "history" && (

@@ -19,6 +19,7 @@ const MediaCard = memo(function MediaCard({
   onMarkUnwatched,
   ageRating,
   restricted,
+  meta, // optional line under the title (defaults to "year · type")
 }) {
   const t = useT();
   const title = item.title || item.name;
@@ -145,9 +146,10 @@ const MediaCard = memo(function MediaCard({
             {title}
           </div>
           <div className="card-year">
-            {isTV && item.season != null && item.episode != null
+            {meta ??
+              (isTV && item.season != null && item.episode != null
               ? `S${item.season}E${item.episode}${item.episodeName ? ` · ${item.episodeName}` : ""}`
-              : `${year} · ${isTV ? t("media.series") : t("media.movie")}`}
+              : `${year} · ${isTV ? t("media.series") : t("media.movie")}`)}
           </div>
         </div>
         <span

@@ -68,17 +68,18 @@ export function HaloRail({ title, children, variant = "tall" }) {
 }
 
 // 16:10 landscape card used for "Up next" (continue watching)
-export function HaloWideCard({ item, progress = 0, onClick }) {
+export function HaloWideCard({ item, progress = 0, onClick, meta: metaOverride }) {
   const t = useT();
   const title = item.title || item.name;
   const isTV = item.media_type === "tv";
   const art = item.backdrop_path || item.poster_path;
   const meta =
-    isTV && item.season != null && item.episode != null
+    metaOverride ??
+    (isTV && item.season != null && item.episode != null
       ? `S${item.season} · E${item.episode}${item.episodeName ? ` · ${item.episodeName}` : ""}`
       : isTV
         ? t("media.series")
-        : t("media.movie");
+        : t("media.movie"));
   return (
     <button className="halo-wide" onClick={onClick}>
       <span className={`halo-wide__frame${item.backdrop_path ? "" : " is-poster"}`}>

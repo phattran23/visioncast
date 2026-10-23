@@ -85,10 +85,19 @@ export default function MoviePage({
   downloads,
   onGoToDownloads,
   onSelect,
+  onPlayingChange,
 }) {
   const t = useT();
   const [details, setDetails] = useState(null);
   const [playing, setPlaying] = useState(false);
+  // Tell App whether the player is running (keeps it alive as a mini player
+  // when the user browses elsewhere)
+  const onPlayingChangeRef = useRef(onPlayingChange);
+  onPlayingChangeRef.current = onPlayingChange;
+  useEffect(() => {
+    onPlayingChangeRef.current?.(playing);
+  }, [playing]);
+  useEffect(() => () => onPlayingChangeRef.current?.(false), []);
   const [showDownload, setShowDownload] = useState(false);
   const [trailerKey, setTrailerKey] = useState(null);
   const [showTrailer, setShowTrailer] = useState(false);
