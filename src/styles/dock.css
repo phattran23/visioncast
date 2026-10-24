@@ -804,3 +804,66 @@ body.vc-fullscreen .vc-mini-host {
         padding-left: 16px;
     }
 }
+
+/* ── Mini player: drag to move, corner handle to resize ──────────────────── */
+.vc-mini-bar {
+    cursor: grab;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.vc-mini-host.is-dragging .vc-mini-bar {
+    cursor: grabbing;
+}
+
+.vc-mini-bar .vc-mini-btn {
+    cursor: pointer;
+}
+
+/* While dragging, the video must not swallow pointer events */
+.vc-mini-host.is-dragging iframe {
+    pointer-events: none;
+}
+
+.vc-mini-host.is-dragging {
+    box-shadow: 0 32px 90px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 90, 54, 0.6);
+}
+
+.vc-mini-resize {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: end;
+    padding: 0 3px 3px 0;
+    border-top-left-radius: 14px;
+    background: linear-gradient(135deg, transparent 40%, rgba(8, 8, 11, 0.75) 41%);
+    color: rgba(255, 255, 255, 0.85);
+    cursor: nwse-resize;
+    touch-action: none;
+    opacity: 0.75;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.vc-mini-resize svg {
+    width: 16px;
+    height: 16px;
+}
+
+.vc-mini-host:hover .vc-mini-resize,
+.vc-mini-host.is-dragging .vc-mini-resize {
+    opacity: 1;
+    color: var(--signal);
+}
+
+@media (hover: none) {
+    .vc-mini-resize {
+        opacity: 1;
+        width: 36px;
+        height: 36px;
+    }
+}

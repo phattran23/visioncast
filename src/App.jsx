@@ -724,6 +724,78 @@ export default function App() {
     [],
   );
 
+  // Mini player position/size: { x, y, w } in px (null = default corner).
+  // Dragged by its title bar, resized from the corner handle, kept on screen
+  // and remembered. The video keeps 16:9, so height follows width.
+  const MINI_BAR_H = 44;
+  const [miniBox, setMiniBox] = useState(() => storage.get("miniPlayerBox"));
+  const miniBoxRef = useRef(miniBox);
+  const clampMini = useCallback((b) => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const w = Math.round(Math.min(Math.max(b.w, 220), Math.min(960, vw - 16)));
+    const h = (w * 9) / 16 + MINI_BAR_H;
+    return {
+      w,
+      x: Math.round(Math.min(Math.max(b.x, 8), vw - w - 8)),
+      y: Math.round(Math.min(Math.max(b.y, 8), Math.max(8, vh - h - 8))),
+    };
+  }, []);
+  const updateMini = useCallback((b) => {
+    miniBoxRef.current = b;
+    setMiniBox(b);
+  }, []);
+  useEffect(() => {
+    if (!miniBox) return;
+    const onResize = () => updateMini(clampMini(miniBoxRef.current));
+    window.addEventListener("resize", onResize);
+    onResize();
+    return () => window.removeEventListener("resize", onResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!miniBox]);
+
+  const startMiniGesture = useCallback(
+    (e, mode) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      if (mode === "move" && e.target.closest("button")) return;
+      const handle = e.currentTarget;
+      const host = handle.closest(".vc-mini-host");
+      if (!host) return;
+      e.preventDefault();
+      const r = host.getBoundingClientRect();
+      const start = { px: e.clientX, py: e.clientY, x: r.left, y: r.top, w: r.width };
+      handle.setPointerCapture?.(e.pointerId);
+      host.classList.add("is-dragging");
+      const move = (ev) => {
+        const dx = ev.clientX - start.px;
+        const dy = ev.clientY - start.py;
+        updateMini(
+          clampMini(
+            mode === "move"
+              ? { x: start.x + dx, y: start.y + dy, w: start.w }
+              : // grow with whichever axis moved more (in 16:9 terms)
+                { x: start.x, y: start.y, w: start.w + Math.max(dx, (dy * 16) / 9) },
+          ),
+        );
+      };
+      const end = () => {
+        handle.removeEventListener("pointermove", move);
+        handle.removeEventListener("pointerup", end);
+        handle.removeEventListener("pointercancel", end);
+        host.classList.remove("is-dragging");
+        if (miniBoxRef.current) storage.set("miniPlayerBox", miniBoxRef.current);
+      };
+      handle.addEventListener("pointermove", move);
+      handle.addEventListener("pointerup", end);
+      handle.addEventListener("pointercancel", end);
+    },
+    [clampMini, updateMini],
+  );
+  const resetMini = useCallback(() => {
+    updateMini(null);
+    storage.remove("miniPlayerBox");
+  }, [updateMini]);
+
   // Each page starts at the top; reopening a title that is still playing
   // scrolls straight to its player (VidSrc pauses when its player is off-screen)
   useEffect(() => {
@@ -1200,9 +1272,22 @@ export default function App() {
               const isMini = t.key !== currentTitleKey;
               const Page = t.page === "tv" ? TVPage : MoviePage;
               return (
-                <div key={t.key} className={isMini ? "vc-mini-host" : undefined}>
+                <div
+                  key={t.key}
+                  className={isMini ? "vc-mini-host" : undefined}
+                  style={
+                    isMini && miniBox
+                      ? { left: miniBox.x, top: miniBox.y, right: "auto", bottom: "auto", width: miniBox.w }
+                      : undefined
+                  }
+                >
                   {isMini && (
-                    <div className="vc-mini-bar">
+                    <div
+                      className="vc-mini-bar"
+                      onPointerDown={(e) => startMiniGesture(e, "move")}
+                      onDoubleClick={(e) => !e.target.closest("button") && resetMini()}
+                      title={uiLang === "vi" ? "Kéo để di chuyển · nhấp đúp để đặt lại" : "Drag to move · double-click to reset"}
+                    >
                       <span className="vc-mini-title">
                         {t.selected.title || t.selected.name}
                       </span>
@@ -1225,6 +1310,17 @@ export default function App() {
                     </div>
                   )}
                   <Page {...titleProps(t)} />
+                  {isMini && (
+                    <span
+                      className="vc-mini-resize"
+                      onPointerDown={(e) => startMiniGesture(e, "resize")}
+                      role="separator"
+                      aria-label={uiLang === "vi" ? "Kéo để đổi kích thước" : "Drag to resize"}
+                      title={uiLang === "vi" ? "Kéo để đổi kích thước" : "Drag to resize"}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M20 12l-8 8M20 18l-2 2M20 6L6 20" /></svg>
+                    </span>
+                  )}
                 </div>
               );
             })}
