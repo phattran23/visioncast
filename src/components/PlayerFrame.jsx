@@ -1,4 +1,5 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useT } from "../utils/i18n";
 
 // Browser stand-in for Electron's <webview> tag.
 //
@@ -17,6 +18,9 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 //   Vidking: { type: "PLAYER_EVENT", data: { event, currentTime, duration } }
 
 const STALE_MS = 15000;
+// After the viewer first taps into the player, how long we wait for playback
+// to start before offering another source
+const STUCK_MS = 15000;
 
 const toJson = (v) => {
   if (typeof v !== "string") return v;
@@ -59,11 +63,25 @@ function parseProgress(raw) {
 }
 
 const PlayerFrame = forwardRef(function PlayerFrame(
-  { src, style, title = "Player" },
+  {
+    src,
+    style,
+    title = "Player",
+    // "Not playing?" prompt: shown when the viewer tapped into the player but
+    // no playback started (e.g. the source needs an ad pop-up the browser
+    // blocked). Only for sources that report progress (watchStuck).
+    watchStuck = false,
+    nextSourceLabel,
+    onNextSource,
+  },
   ref,
 ) {
+  const t = useT();
   const frameRef = useRef(null);
   const progressRef = useRef(null);
+  const progressedRef = useRef(false);
+  const stuckTimer = useRef(null);
+  const [stuck, setStuck] = useState(false);
 
   useImperativeHandle(ref, () => frameRef.current, []);
 
@@ -74,6 +92,12 @@ const PlayerFrame = forwardRef(function PlayerFrame(
       if (!frame || e.source !== frame.contentWindow) return;
       const p = parseProgress(e.data);
       if (!p) return;
+      if (p.currentTime > 0.5 && !progressedRef.current) {
+        progressedRef.current = true;
+        clearTimeout(stuckTimer.current);
+        stuckTimer.current = null;
+        setStuck(false);
+      }
       const prev = progressRef.current;
       const paused =
         p.event === "pause" ||
@@ -89,7 +113,33 @@ const PlayerFrame = forwardRef(function PlayerFrame(
   // Reset progress whenever the source changes
   useEffect(() => {
     progressRef.current = null;
+    progressedRef.current = false;
+    clearTimeout(stuckTimer.current);
+    stuckTimer.current = null;
+    setStuck(false);
   }, [src]);
+
+  // Tapping/clicking into the cross-origin player moves focus into the
+  // iframe (the window blurs): start the "did playback begin?" timer then
+  useEffect(() => {
+    if (!watchStuck || !onNextSource) return;
+    const onBlur = () => {
+      setTimeout(() => {
+        if (document.activeElement !== frameRef.current) return;
+        if (progressedRef.current || stuckTimer.current) return;
+        stuckTimer.current = setTimeout(() => {
+          stuckTimer.current = null;
+          if (!progressedRef.current) setStuck(true);
+        }, STUCK_MS);
+      }, 0);
+    };
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("blur", onBlur);
+      clearTimeout(stuckTimer.current);
+      stuckTimer.current = null;
+    };
+  }, [watchStuck, onNextSource, src]);
 
   // Attach the webview-compatible methods + event forwarding to the node
   useEffect(() => {
@@ -126,15 +176,42 @@ const PlayerFrame = forwardRef(function PlayerFrame(
   }, []);
 
   return (
-    <iframe
-      ref={frameRef}
-      src={src}
-      title={title}
-      style={style}
-      allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-      allowFullScreen
-      referrerPolicy="origin"
-    />
+    <>
+      <iframe
+        ref={frameRef}
+        src={src}
+        title={title}
+        style={style}
+        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+        allowFullScreen
+        referrerPolicy="origin"
+      />
+      {stuck && onNextSource && (
+        <div className="vc-stuck" role="status">
+          <span className="vc-stuck__text">{t("player.stuck")}</span>
+          <button type="button" className="vc-stuck__primary" onClick={onNextSource}>
+            {t("player.tryNext", { name: nextSourceLabel })}
+          </button>
+          <button
+            type="button"
+            className="vc-stuck__secondary"
+            onClick={() => window.open(src, "_blank", "noopener")}
+          >
+            {t("player.openSeparate")}
+          </button>
+          <button
+            type="button"
+            className="vc-stuck__close"
+            onClick={() => setStuck(false)}
+            aria-label={t("player.dismiss")}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </>
   );
 });
 

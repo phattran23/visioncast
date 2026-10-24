@@ -121,24 +121,66 @@ export const tmdbFetch = async (path, apiKey) => {
 // https://www.vidking.net/#documentation
 
 // ── Player Sources ────────────────────────────────────────────────────────────
-// Web build: VidSrc only.
+// Web build: VidSrc first, with fallbacks for when a source won't play.
 // supportsProgress: true = executeJavaScript tracking works for this source
 export const PLAYER_SOURCES = [
+  // vidsrc.pm: VidSrc mirror that also plays when the browser blocks the ad
+  // pop-up (iPhone Safari's default), so it goes first
   {
     id: "vidsrc",
     label: "VidSrc",
     tag: null,
     note: null,
     supportsProgress: true,
-    progressViaFrames: true, // video is in a nested iframe, needs main-process frame query
-    colorParam: null, // vidsrc doesn't support color param
-    langParam: "ds_lang", // ISO 639-1 language code
+    colorParam: null,
+    langParam: "ds_lang",
+    params: {},
+    movieUrl: (id) => `https://vidsrc.pm/embed/movie/${id}`,
+    tvUrl: (id, season, ep) => `https://vidsrc.pm/embed/tv/${id}/${season}/${ep}`,
+  },
+  {
+    id: "vidsrc2",
+    label: "VidSrc 2",
+    tag: null,
+    note: null,
+    supportsProgress: true,
+    colorParam: null,
+    langParam: "ds_lang",
     params: {},
     movieUrl: (id) => `https://vsembed.su/embed/movie/${id}`,
-    tvUrl: (id, season, ep) =>
-      `https://vsembed.su/embed/tv/${id}/${season}/${ep}`,
+    tvUrl: (id, season, ep) => `https://vsembed.su/embed/tv/${id}/${season}/${ep}`,
+  },
+  {
+    id: "vidlink",
+    label: "VidLink",
+    tag: null,
+    note: null,
+    supportsProgress: true,
+    colorParam: "primaryColor",
+    langParam: null,
+    params: {},
+    movieUrl: (id) => `https://vidlink.pro/movie/${id}`,
+    tvUrl: (id, season, ep) => `https://vidlink.pro/tv/${id}/${season}/${ep}`,
+  },
+  {
+    id: "vidsrcto",
+    label: "VidSrc.to",
+    tag: null,
+    note: null,
+    supportsProgress: false, // posts no playback events
+    colorParam: null,
+    langParam: null,
+    params: {},
+    movieUrl: (id) => `https://vidsrc.to/embed/movie/${id}`,
+    tvUrl: (id, season, ep) => `https://vidsrc.to/embed/tv/${id}/${season}/${ep}`,
   },
 ];
+
+// Next source after `id` (wraps), used for the "try another source" prompt
+export const nextSourceAfter = (id) => {
+  const i = PLAYER_SOURCES.findIndex((s) => s.id === id);
+  return PLAYER_SOURCES[(i + 1) % PLAYER_SOURCES.length];
+};
 export const getSourceUrl = (
   sourceId,
   type,

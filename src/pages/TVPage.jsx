@@ -18,6 +18,7 @@ import {
   PLAYER_SOURCES,
   getSourceUrl,
   sourceSupportsProgress,
+  nextSourceAfter,
   sourceProgressViaFrames,
   sourceIsAsync,
   fetchAnilistData,
@@ -427,6 +428,26 @@ export default function TVPage({
   );
   const [selectedEp, setSelectedEp] = useState(null);
   const [playing, setPlaying] = useState(false);
+  // Switch player source (source menu + "try another source" prompt)
+  const selectSource = (id) => {
+    setShowSourceMenu(false);
+    if (id === playerSource) return;
+    // Manual selection wins over auto-failover
+    if (selectedEp) {
+      clearFailoverSource(
+        `tv_${item.id}_s${selectedSeason}_e${selectedEp.episode_number}_${dubMode}`,
+      );
+    }
+    setPlayerSource(id);
+    storage.set(STORAGE_KEYS.PLAYER_SOURCE, id);
+    setM3u8Url(null);
+    setInterceptedSubs([]);
+    resolvedPlayerUrlRef.current = null;
+    setResolvedPlayerUrl(null);
+    resolvingUrlRef.current = false;
+    setResolvingUrl(false);
+    setResolveError(null);
+  };
   // Tell App whether the player is running (keeps it alive as a mini player
   // when the user browses elsewhere)
   const onPlayingChangeRef = useRef(onPlayingChange);
@@ -2108,6 +2129,9 @@ export default function TVPage({
                 )}
                 <PlayerFrame
                   ref={webviewRef}
+                  watchStuck={sourceSupportsProgress(playerSource)}
+                  nextSourceLabel={nextSourceAfter(playerSource).label}
+                  onNextSource={() => selectSource(nextSourceAfter(playerSource).id)}
                   src={
                     pipOpen
                       ? "about:blank"
@@ -2211,25 +2235,7 @@ export default function TVPage({
                             ? " source-dropdown__item--active"
                             : "")
                         }
-                        onClick={() => {
-                          setShowSourceMenu(false);
-                          if (src.id === playerSource) return;
-                          // Manual selection wins over auto-failover
-                          if (selectedEp) {
-                            clearFailoverSource(
-                              `tv_${item.id}_s${selectedSeason}_e${selectedEp.episode_number}_${dubMode}`,
-                            );
-                          }
-                          setPlayerSource(src.id);
-                          storage.set(STORAGE_KEYS.PLAYER_SOURCE, src.id);
-                          setM3u8Url(null);
-                          setInterceptedSubs([]);
-                          resolvedPlayerUrlRef.current = null;
-                          setResolvedPlayerUrl(null);
-                          resolvingUrlRef.current = false;
-                          setResolvingUrl(false);
-                          setResolveError(null);
-                        }}
+                        onClick={() => selectSource(src.id)}
                       >
                         <span>{src.label}</span>
                         {src.tag && (

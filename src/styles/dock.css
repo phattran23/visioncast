@@ -867,3 +867,105 @@ body.vc-fullscreen .vc-mini-host {
         height: 36px;
     }
 }
+
+/* ── "Not playing?" prompt over the player ───────────────────────────────── */
+.vc-stuck {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    z-index: 12;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: max-content;
+    max-width: calc(100% - 24px);
+    padding: 8px 8px 8px 16px;
+    border-radius: 999px;
+    background: rgba(20, 20, 28, 0.9);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+    color: #fff;
+    animation: vc-stuck-in 0.5s var(--dock-ease) backwards;
+}
+
+@keyframes vc-stuck-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 16px) scale(0.96);
+    }
+}
+
+.vc-stuck__text {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.vc-stuck button {
+    height: 38px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s var(--ease), background 0.2s;
+}
+
+.vc-stuck__primary {
+    padding: 0 16px;
+    border: 0;
+    background: var(--signal);
+    color: #0b0b10;
+}
+
+.vc-stuck__secondary {
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.vc-stuck__close {
+    width: 38px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.75);
+    display: grid;
+    place-items: center;
+}
+
+.vc-stuck__close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.vc-stuck button:hover {
+    transform: translateY(-1px);
+}
+
+.vc-mini-host .vc-stuck {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    .vc-stuck {
+        bottom: 10px;
+        border-radius: 22px;
+        padding: 8px;
+        gap: 6px;
+    }
+    .vc-stuck__text {
+        width: 100%;
+        text-align: center;
+        font-size: 13px;
+    }
+    .vc-stuck button {
+        height: 34px;
+        font-size: 13px;
+    }
+}

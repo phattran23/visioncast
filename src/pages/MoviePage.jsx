@@ -13,6 +13,7 @@ import {
   PLAYER_SOURCES,
   getSourceUrl,
   sourceSupportsProgress,
+  nextSourceAfter,
   sourceProgressViaFrames,
   sourceIsAsync,
   fetchAnilistData,
@@ -90,6 +91,22 @@ export default function MoviePage({
   const t = useT();
   const [details, setDetails] = useState(null);
   const [playing, setPlaying] = useState(false);
+  // Switch player source (source menu + "try another source" prompt)
+  const selectSource = (id) => {
+    setShowSourceMenu(false);
+    if (id === playerSource) return;
+    // Manual selection wins over auto-failover
+    clearFailoverSource(`movie_${item.id}_${dubMode}`);
+    setPlayerSource(id);
+    storage.set(STORAGE_KEYS.PLAYER_SOURCE, id);
+    setM3u8Url(null);
+    setInterceptedSubs([]);
+    resolvedPlayerUrlRef.current = null;
+    setResolvedPlayerUrl(null);
+    resolvingUrlRef.current = false;
+    setResolvingUrl(false);
+    setResolveError(null);
+  };
   // Tell App whether the player is running (keeps it alive as a mini player
   // when the user browses elsewhere)
   const onPlayingChangeRef = useRef(onPlayingChange);
@@ -1034,6 +1051,9 @@ export default function MoviePage({
             )}
             <PlayerFrame
               ref={webviewRef}
+              watchStuck={sourceSupportsProgress(playerSource)}
+              nextSourceLabel={nextSourceAfter(playerSource).label}
+              onNextSource={() => selectSource(nextSourceAfter(playerSource).id)}
               src={
                 pipOpen
                   ? "about:blank"
@@ -1132,21 +1152,7 @@ export default function MoviePage({
                         ? " source-dropdown__item--active"
                         : "")
                     }
-                    onClick={() => {
-                      setShowSourceMenu(false);
-                      if (src.id === playerSource) return;
-                      // Manual selection wins over auto-failover
-                      clearFailoverSource(`movie_${item.id}_${dubMode}`);
-                      setPlayerSource(src.id);
-                      storage.set(STORAGE_KEYS.PLAYER_SOURCE, src.id);
-                      setM3u8Url(null);
-                      setInterceptedSubs([]);
-                      resolvedPlayerUrlRef.current = null;
-                      setResolvedPlayerUrl(null);
-                      resolvingUrlRef.current = false;
-                      setResolvingUrl(false);
-                      setResolveError(null);
-                    }}
+                    onClick={() => selectSource(src.id)}
                   >
                     <span>{src.label}</span>
                     {src.tag && (
