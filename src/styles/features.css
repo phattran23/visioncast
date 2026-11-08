@@ -425,13 +425,27 @@
         padding-top: 56.25%;
     }
     .nx-preview__media > img,
-    .nx-preview__media > iframe,
-    .nx-preview__media > iframe.is-blocked,
     .nx-preview__fade {
         inset: 0 0 auto 0;
         width: 100%;
         height: auto;
         aspect-ratio: 16 / 9;
+    }
+    /* YouTube's phone player draws its title bar and logo at the player's
+       edges: make the player twice as tall as the 16:9 video (which it
+       letterboxes) so those land outside the visible frame.
+       The video is 100vw wide here, so its height is 56.25vw. */
+    .nx-preview__media {
+        overflow: hidden;
+    }
+    .nx-preview__media > iframe,
+    .nx-preview__media > iframe.is-blocked {
+        inset: auto;
+        top: -28.125vw;
+        left: 0;
+        width: 100%;
+        height: 112.5vw;
+        aspect-ratio: auto;
     }
     .nx-preview__fade {
         background: linear-gradient(to top, #18181b 0%, rgba(24, 24, 27, 0) 32%);
@@ -444,6 +458,11 @@
         inset: auto;
         padding: 14px 16px 0;
         color: inherit;
+        /* solid, so the cropped part of the player never shows through */
+        background: #18181b;
+    }
+    :root[data-theme="halo-light"] .nx-preview__head {
+        background: #fbfbf8;
     }
     .nx-preview__title {
         max-width: none;

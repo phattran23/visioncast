@@ -132,7 +132,7 @@ export default function NxPreview({
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
-    boxRef.current?.focus();
+    boxRef.current?.focus({ preventScroll: true });
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
@@ -178,6 +178,7 @@ export default function NxPreview({
   const heard = useRef(false); // the player has answered our handshake
   const handshake = useRef(null);
   const blockTimer = useRef(null);
+  const revealTimer = useRef(null);
   useEffect(() => {
     if (!trailer || meta.restricted) return;
     setYt("loading");
@@ -202,7 +203,14 @@ export default function NxPreview({
         ytCommand("playVideo");
       }
       const state = m.event === "onStateChange" ? m.info : m.info?.playerState;
-      if (state === 1) setYt("playing");
+      // Reveal once YouTube's start-up overlay (title, controls, logo) has
+      // faded; phones show it longer
+      if (state === 1) clearTimeout(blockTimer.current); // it does play
+      if (state === 1 && !revealTimer.current)
+        revealTimer.current = setTimeout(
+          () => setYt((s) => (s === "loading" || s === "blocked" ? "playing" : s)),
+          window.matchMedia?.("(hover: none)").matches ? 3000 : 900,
+        );
       if (m.event === "onError") setYt("failed");
     };
     window.addEventListener("message", onMsg);
@@ -217,6 +225,8 @@ export default function NxPreview({
       window.removeEventListener("message", onMsg);
       window.removeEventListener("blur", onBlur);
       clearTimeout(blockTimer.current);
+      clearTimeout(revealTimer.current);
+      revealTimer.current = null;
       clearInterval(handshake.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
