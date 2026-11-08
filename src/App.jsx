@@ -34,7 +34,7 @@ import {
 } from "./utils/discordPresence";
 
 import TopNav from "./components/TopNav";
-import { useLang, getSubtitleLang, LANG_EVENT } from "./utils/i18n";
+import { useLang, getSubtitleLang, LANG_EVENT, useT } from "./utils/i18n";
 import AuthScreen from "./components/AuthScreen";
 import { getAuthMode, startSync } from "./utils/account";
 import SearchModal from "./components/SearchModal";
@@ -54,6 +54,8 @@ const BrowsePage = lazy(() => import("./pages/BrowsePage"));
 const NewHotPage = lazy(() => import("./pages/NewHotPage"));
 import NxPreview from "./components/NxPreview";
 import PickForMe from "./components/PickForMe";
+import ShareSheet, { shareTitle } from "./components/ShareSheet";
+import { continueAsGuest } from "./utils/account";
 import { buildAffinity, RATINGS_EVENT } from "./utils/taste";
 import { takeDueReminders } from "./utils/reminders";
 import { imgUrl as nxImg } from "./utils/api";
@@ -65,7 +67,16 @@ export default function App() {
   }, [uiLang]);
 
   // Account: "user" | "guest" | null (show the sign-in screen)
-  const [authMode, setAuthMode] = useState(getAuthMode);
+  const [authMode, setAuthMode] = useState(() => {
+    const mode = getAuthMode();
+    // Someone opening a shared film link goes straight to it as a guest;
+    // they can sign in later from Settings
+    if (!mode && /^\/(movie|tv)\/\d+\/?$/.test(window.location.pathname)) {
+      continueAsGuest();
+      return "guest";
+    }
+    return mode;
+  });
   useEffect(() => {
     const onChange = () => setAuthMode(getAuthMode());
     window.addEventListener("visioncast:auth-changed", onChange);
@@ -1103,6 +1114,12 @@ export default function App() {
 
   // ── Preview, pick-for-me, play-now, reminders ───────────────────────────
   const [preview, setPreview] = useState(null); // { item, meta }
+  const [shareItem, setShareItem] = useState(null);
+  const tShare = useT();
+  const share = useCallback(
+    (item) => shareTitle(item, { openSheet: () => setShareItem(item), t: tShare }),
+    [tShare],
+  );
   const [showPick, setShowPick] = useState(false);
   const [dueReminders, setDueReminders] = useState([]);
   const [ratingsTick, setRatingsTick] = useState(0);
@@ -1187,7 +1204,33 @@ export default function App() {
       ? { onEpisodeChange: setWatchingEpisode }
       : { onSelect: handleSelectResult }),
     onPlayingChange: titlePlaying(t.key),
+    onShare: share,
   });
+
+  // Shared links (/movie/550, /tv/1399) open that title
+  const deepLink = useRef(
+    typeof window !== "undefined"
+      ? window.location.pathname.match(/^\/(movie|tv)\/(\d+)\/?$/)
+      : null,
+  );
+  useEffect(() => {
+    const m = deepLink.current;
+    if (!m || !apiKey) return;
+    deepLink.current = null;
+    const type = m[1];
+    const id = Number(m[2]);
+    tmdbFetch(`/${type}/${id}`, apiKey, { priority: true })
+      .then((d) => navigate(type, { ...d, media_type: type }))
+      .catch(() => navigate(type, { id, media_type: type }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiKey]);
+  // The address bar follows the open title, so it can be copied and shared
+  useEffect(() => {
+    if (deepLink.current) return; // still opening a shared link
+    const want = currentTitleKey && selected ? `/${page}/${selected.id}` : "/";
+    if (window.location.pathname !== want)
+      window.history.replaceState(window.history.state, "", want + window.location.search);
+  }, [currentTitleKey, page, selected]);
 
   if (!apiKeyLoaded) return null; // wait for secure storage to resolve
   if (!authMode)
@@ -1399,8 +1442,10 @@ export default function App() {
             onPreview={(i) => openPreview(i)}
             isSaved={isSaved}
             onToggleSave={toggleSave}
+            onShare={share}
           />
         )}
+        {shareItem && <ShareSheet item={shareItem} onClose={() => setShareItem(null)} />}
         {showPick && (
           <PickForMe
             apiKey={apiKey}

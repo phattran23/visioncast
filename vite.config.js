@@ -11,7 +11,8 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
     },
-    base: "./",
+    // Absolute: deep links like /movie/550 must still find /assets/…
+    base: "/",
     build: {
       minify: "terser",
       terserOptions: {

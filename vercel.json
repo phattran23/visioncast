@@ -9,6 +9,17 @@
       "destination": "https://visioncast.trantienphat-ftu2.workers.dev/api/:path*"
     },
     {
+      "source": "/:type(movie|tv)/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|meta-externalagent|whatsapp|telegrambot|zalo|twitterbot|slackbot|discordbot|linkedinbot|skypeuripreview|googlebot|bingbot|applebot|embedly|pinterest|redditbot|viber|line-poker|kakaotalk).*"
+        }
+      ],
+      "destination": "https://visioncast.trantienphat-ftu2.workers.dev/:type/:id"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

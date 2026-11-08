@@ -16,6 +16,12 @@ const Svg = ({ children, size = 22, sw = 2 }) => (
 export const PlusIcon = () => <Svg><path d="M12 5v14M5 12h14" /></Svg>;
 export const CheckIcon = () => <Svg sw={2.3}><path d="M5 12.5l4.5 4.5L19 7.5" /></Svg>;
 const CloseIcon = () => <Svg><path d="M6 6l12 12M18 6L6 18" /></Svg>;
+export const ShareIcon = () => (
+  <Svg sw={1.9}>
+    <path d="M12 4v11M7.5 8.5L12 4l4.5 4.5" />
+    <path d="M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5" />
+  </Svg>
+);
 const ThumbUp = ({ fill }) => (
   <Svg sw={1.8}>
     <path d="M7 11v9H4v-9zM7 11l4-7c1.4 0 2.3 1.1 2 2.5L12.5 10H18a2 2 0 012 2.3l-1.2 6A2 2 0 0116.8 20H7" fill={fill ? "currentColor" : "none"} />
@@ -85,6 +91,7 @@ export default function NxPreview({
   onPreview,
   isSaved,
   onToggleSave,
+  onShare,
 }) {
   const t = useT();
   const lang = useLang();
@@ -321,6 +328,16 @@ export default function NxPreview({
                 </button>
               )}
               <RateButtons item={full} />
+              {onShare && (
+                <button
+                  className="nx-round"
+                  onClick={() => onShare(full)}
+                  aria-label={t("share.button")}
+                  title={t("share.button")}
+                >
+                  <ShareIcon />
+                </button>
+              )}
               {ytSrc && yt === "playing" && (
                 <button
                   className="nx-round nx-preview__sound"

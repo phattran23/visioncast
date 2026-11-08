@@ -418,6 +418,7 @@ export default function TVPage({
   onGoToDownloads,
   onEpisodeChange,
   onPlayingChange,
+  onShare,
 }) {
   const t = useT();
   const [details, setDetails] = useState(null);
@@ -1833,6 +1834,12 @@ export default function TVPage({
                     {isSaved ? <BookmarkFillIcon /> : <BookmarkIcon />}
                     {isSaved ? t("detail.saved") : t("detail.save")}
                   </button>
+                  {onShare && (
+                    <button className="btn btn-ghost" onClick={() => onShare({ ...d, media_type: "tv" })}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 8.5L12 4l4.5 4.5" /><path d="M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5" /></svg>{" "}
+                      {t("share.button")}
+                    </button>
+                  )}
                   <button className="btn btn-ghost" onClick={onBack}>
                     <BackIcon /> {t("detail.back")}
                   </button>

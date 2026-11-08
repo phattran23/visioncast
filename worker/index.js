@@ -281,9 +281,105 @@ async function handleApi(req, env, url) {
   return fail(404, "not_found");
 }
 
+// ── Share cards ─────────────────────────────────────────────────────────────
+// Chat apps (Messenger, Facebook, Zalo, WhatsApp, Telegram…) read a link's
+// HTML without running JavaScript. For /movie/:id and /tv/:id we serve the
+// app's index.html with the film's name, synopsis and artwork as Open Graph
+// tags, so the link shows up as a picture card.
+const esc = (s) =>
+  String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+async function tmdbTitle(env, type, id, lang) {
+  if (!env.TMDB_TOKEN) return null;
+  const api = `https://api.themoviedb.org/3/${type}/${id}?language=${lang}`;
+  const cache = caches.default;
+  const key = new Request(`https://share-card.cache/${type}/${id}/${lang}`);
+  const hit = await cache.match(key);
+  if (hit) return hit.json();
+  const r = await fetch(api, { headers: { Authorization: `Bearer ${env.TMDB_TOKEN}` } });
+  if (!r.ok) return null;
+  const data = await r.json();
+  await cache.put(key, new Response(JSON.stringify(data), { headers: { "cache-control": "public, max-age=86400" } }));
+  return data;
+}
+
+async function shareCard(req, env, url, type, id) {
+  const page = await env.ASSETS.fetch(new Request(new URL("/", url), req));
+  let d = null;
+  try {
+    d = await tmdbTitle(env, type, id, "vi-VN");
+    // No Vietnamese synopsis: take the English one
+    if (d && !d.overview) {
+      const en = await tmdbTitle(env, type, id, "en-US");
+      if (en?.overview) d = { ...d, overview: en.overview };
+    }
+  } catch (e) {
+    console.error("share card", e);
+  }
+  if (!d || !d.id) return page;
+
+  const name = d.title || d.name || "VisionCast";
+  const year = (d.release_date || d.first_air_date || "").slice(0, 4);
+  const heading = `${name}${year ? ` (${year})` : ""}`;
+  const rating = d.vote_average ? `★ ${d.vote_average.toFixed(1)} · ` : "";
+  const kind = type === "tv" ? "Phim bộ" : "Phim lẻ";
+  const overview = (d.overview || "").replace(/\s+/g, " ").trim();
+  const desc = `${rating}${kind}${overview ? ` · ${overview.length > 190 ? overview.slice(0, 187) + "…" : overview}` : ""}`;
+  const art = d.backdrop_path
+    ? { src: `https://image.tmdb.org/t/p/w1280${d.backdrop_path}`, w: 1280, h: 720 }
+    : d.poster_path
+      ? { src: `https://image.tmdb.org/t/p/w780${d.poster_path}`, w: 780, h: 1170 }
+      : null;
+  const canonical = `${url.origin}/${type}/${d.id}`;
+
+  const tags = [
+    `<meta property="og:type" content="${type === "tv" ? "video.tv_show" : "video.movie"}" />`,
+    `<meta property="og:site_name" content="VisionCast" />`,
+    `<meta property="og:title" content="${esc(heading)}" />`,
+    `<meta property="og:description" content="${esc(desc)}" />`,
+    `<meta property="og:url" content="${esc(canonical)}" />`,
+    `<meta name="description" content="${esc(desc)}" />`,
+    `<meta name="twitter:title" content="${esc(heading)}" />`,
+    `<meta name="twitter:description" content="${esc(desc)}" />`,
+    `<link rel="canonical" href="${esc(canonical)}" />`,
+  ];
+  if (art)
+    tags.push(
+      `<meta property="og:image" content="${art.src}" />`,
+      `<meta property="og:image:secure_url" content="${art.src}" />`,
+      `<meta property="og:image:width" content="${art.w}" />`,
+      `<meta property="og:image:height" content="${art.h}" />`,
+      `<meta property="og:image:alt" content="${esc(name)}" />`,
+      `<meta name="twitter:card" content="summary_large_image" />`,
+      `<meta name="twitter:image" content="${art.src}" />`,
+    );
+
+  const res = new HTMLRewriter()
+    // drop the site-wide defaults the card replaces
+    .on('meta[property^="og:"], meta[name="description"], meta[name^="twitter:"]', {
+      element: (el) => el.remove(),
+    })
+    .on("title", { element: (el) => el.setInnerContent(`${heading} · VisionCast`) })
+    .on("head", { element: (el) => el.append(tags.join("\n"), { html: true }) })
+    .transform(page);
+  const out = new Response(res.body, res);
+  out.headers.set("content-type", "text/html; charset=utf-8");
+  out.headers.set("cache-control", "public, max-age=600");
+  return out;
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+    const m = url.pathname.match(/^\/(movie|tv)\/(\d+)\/?$/);
+    if (m && req.method === "GET") {
+      try {
+        return await shareCard(req, env, url, m[1], m[2]);
+      } catch (e) {
+        console.error(e);
+        return env.ASSETS.fetch(new Request(new URL("/", url), req));
+      }
+    }
     if (url.pathname.startsWith("/api/")) {
       try {
         return await handleApi(req, env, url);
