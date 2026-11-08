@@ -69,9 +69,9 @@ export default function App() {
   // Account: "user" | "guest" | null (show the sign-in screen)
   const [authMode, setAuthMode] = useState(() => {
     const mode = getAuthMode();
-    // Someone opening a shared film link goes straight to it as a guest;
-    // they can sign in later from Settings
-    if (!mode && /^\/(movie|tv)\/\d+\/?$/.test(window.location.pathname)) {
+    // Visitors go straight to the films as guests; the sign-in / sign-up
+    // screen only appears when they ask for it (Settings → Sign in)
+    if (!mode) {
       continueAsGuest();
       return "guest";
     }
