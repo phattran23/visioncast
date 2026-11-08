@@ -10,6 +10,10 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*", "/movie/*", "/tv/*"]
   },
+  // Public address used in share links and their preview cards (og:url)
+  "vars": {
+    "PUBLIC_ORIGIN": "https://visioncast-tau.vercel.app"
+  },
   "d1_databases": [
     {
       "binding": "DB",

@@ -330,7 +330,8 @@ async function shareCard(req, env, url, type, id) {
     : d.poster_path
       ? { src: `https://image.tmdb.org/t/p/w780${d.poster_path}`, w: 780, h: 1170 }
       : null;
-  const canonical = `${url.origin}/${type}/${d.id}`;
+  // Shared links point to the public site (Vercel), not this Worker
+  const canonical = `${env.PUBLIC_ORIGIN || url.origin}/${type}/${d.id}`;
 
   const tags = [
     `<meta property="og:type" content="${type === "tv" ? "video.tv_show" : "video.movie"}" />`,

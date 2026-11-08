@@ -9,19 +9,14 @@ import { useT } from "../utils/i18n";
 // Phones open the system share sheet (every installed app, Instagram and
 // Zalo included). Elsewhere a small sheet offers the apps + copy link.
 
-// The Vercel mirror shares links to the main site, whose Worker builds the
-// preview cards
-const MAIN_ORIGIN = "https://visioncast.trantienphat-ftu2.workers.dev";
+// Shared links always point to the public Vercel site, from whichever copy
+// of the app they're shared. Vercel hands link-preview bots to the Worker
+// (vercel.json), which builds the picture card with this same address.
+export const SHARE_ORIGIN = "https://visioncast-tau.vercel.app";
 
 export function shareUrl(item) {
   const type = item.media_type === "tv" ? "tv" : "movie";
-  const origin =
-    typeof window !== "undefined" &&
-    !/\.vercel\.app$/.test(window.location.hostname) &&
-    !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-      ? window.location.origin
-      : MAIN_ORIGIN;
-  return `${origin}/${type}/${item.id}`;
+  return `${SHARE_ORIGIN}/${type}/${item.id}`;
 }
 
 const isTouch = () =>

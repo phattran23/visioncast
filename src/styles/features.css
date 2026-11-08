@@ -415,40 +415,87 @@
         top: calc(10px + env(safe-area-inset-top));
         right: 10px;
     }
+    /* Phones: video full width on top, then a roomy title + controls
+       below it (instead of squeezed over a 220px-high video) */
     .nx-preview__media {
+        aspect-ratio: auto;
+        overflow: visible;
+        background: transparent;
         margin-top: env(safe-area-inset-top);
+        padding-top: 56.25%;
+    }
+    .nx-preview__media > img,
+    .nx-preview__media > iframe,
+    .nx-preview__media > iframe.is-blocked,
+    .nx-preview__fade {
+        inset: 0 0 auto 0;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+    }
+    .nx-preview__fade {
+        background: linear-gradient(to top, #18181b 0%, rgba(24, 24, 27, 0) 32%);
+    }
+    :root[data-theme="halo-light"] .nx-preview__fade {
+        background: linear-gradient(to top, #fbfbf8 0%, rgba(251, 251, 248, 0) 32%);
     }
     .nx-preview__head {
-        left: 14px;
-        right: 14px;
-        bottom: 12px;
+        position: relative;
+        inset: auto;
+        padding: 14px 16px 0;
+        color: inherit;
     }
     .nx-preview__title {
         max-width: none;
-        margin-bottom: 10px;
-        font-size: 22px;
+        margin: 0 0 14px;
+        font-size: 27px;
+        text-shadow: none;
     }
     .nx-preview__actions {
-        gap: 8px;
+        gap: 12px 10px;
     }
     .nx-preview__actions .nx-btn--play {
-        height: 38px;
-        padding: 0 16px 0 12px;
-        font-size: 15px;
+        flex: 1 0 100%;
+        height: 48px;
+        font-size: 17px;
+        border-radius: 8px;
     }
-    .nx-round,
-    .nx-rate {
-        transform: scale(0.9);
-        transform-origin: left center;
+    .nx-round {
+        width: 48px;
+        height: 48px;
     }
     .nx-rate__btn {
-        width: 32px;
-        height: 32px;
+        width: 42px;
+        height: 42px;
+    }
+    .nx-rate__btn svg,
+    .nx-round svg {
+        width: 22px;
+        height: 22px;
+    }
+    :root[data-theme="halo-light"] .nx-preview__actions .nx-round,
+    :root[data-theme="halo-light"] .nx-preview__actions .nx-rate {
+        border-color: rgba(0, 0, 0, 0.22);
+        background: transparent;
+        color: var(--text);
+    }
+    :root[data-theme="halo-light"] .nx-preview__actions .nx-rate__btn {
+        color: var(--text);
+    }
+    :root[data-theme="halo-light"] .nx-preview__actions .nx-btn--play {
+        background: var(--text);
+        color: #fff;
+    }
+    .nx-preview__facts {
+        font-size: 15px;
+    }
+    .nx-preview__overview {
+        font-size: 16px;
     }
     .nx-preview__body {
         grid-template-columns: 1fr;
         gap: 14px;
-        padding: 18px 16px 20px;
+        padding: 20px 16px 22px;
     }
     .nx-preview__similar {
         padding: 0 16px 28px;
