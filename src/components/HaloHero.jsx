@@ -28,9 +28,10 @@ export default function HaloHero({ items, onSelect, isSaved, onToggleSave }) {
   const timer = useRef(null);
   const touchX = useRef(null);
 
+  const hold = useRef(false); // pointer/focus on the hero: don't change slides
   const restart = useCallback(() => {
     clearInterval(timer.current);
-    if (count > 1)
+    if (count > 1 && !hold.current)
       timer.current = setInterval(
         () => setActive((a) => (a + 1) % count),
         INTERVAL,
@@ -64,6 +65,23 @@ export default function HaloHero({ items, onSelect, isSaved, onToggleSave }) {
 
       <div
         className="halo-hero"
+        onMouseEnter={() => {
+          hold.current = true;
+          clearInterval(timer.current);
+        }}
+        onMouseLeave={() => {
+          hold.current = false;
+          restart();
+        }}
+        onFocus={() => {
+          hold.current = true;
+          clearInterval(timer.current);
+        }}
+        onBlur={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget)) return;
+          hold.current = false;
+          restart();
+        }}
         onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
         onTouchEnd={(e) => {
           if (touchX.current == null) return;

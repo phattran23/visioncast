@@ -1,14 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import MediaCard from "../components/MediaCard";
-import HaloHero from "../components/HaloHero";
-import { HaloRail, HaloWideCard } from "../components/HaloRail";
+import { NxHero, NxRow, NxCard, NxTopCard } from "../components/NxBrowse";
 import { tmdbFetch } from "../utils/api";
 import { useRatings, getRatingForItem } from "../utils/useRatings";
 import { isRestricted } from "../utils/ageRating";
 import { storage } from "../utils/storage";
 import { loadHomeLayout, loadHomeViewMode } from "../utils/homeLayout";
 import { useT, useLang } from "../utils/i18n";
-import { buildRecommendations, buildTopGenre } from "../utils/taste";
+import { buildRecommendations, buildTopGenre, isDisliked, matchScore } from "../utils/taste";
 
 export default function HomePage({
   trending,
@@ -27,7 +26,14 @@ export default function HomePage({
   isSaved,
   onToggleSave,
   saved = [],
+  aff,
+  onPreview,
+  onPlay,
+  onHideUpNext,
 }) {
+  // Cards open the quick preview; fall back to the title page
+  const preview = (item, rd = {}) =>
+    onPreview ? onPreview(item, { cert: rd.cert, restricted: rd.restricted }) : onSelect(item);
   const t = useT();
   const lang = useLang();
 
@@ -187,7 +193,7 @@ export default function HomePage({
     const seen = new Set();
     const push = (item, forYou) => {
       const k = `${item.media_type}_${item.id}`;
-      if (seen.has(k) || !item.backdrop_path) return;
+      if (seen.has(k) || !item.backdrop_path || isDisliked(item)) return;
       seen.add(k);
       out.push(forYou ? { ...item, _forYou: true } : item);
     };
@@ -203,7 +209,26 @@ export default function HomePage({
 
   // Poster rail (default view) or flat grid ("list" view)
   const renderRow = (key, title, items) => {
-    if (!items || items.length === 0) return null;
+    items = (items || []).filter((i) => !isDisliked(i));
+    if (items.length === 0) return null;
+    if (viewMode !== "list")
+      return (
+        <NxRow key={key} title={title}>
+          {items.map((item) => {
+            const type = item.media_type === "tv" ? "tv" : "movie";
+            const rd = enrichedRatingsMap[`${type}_${item.id}`] || {};
+            return (
+              <NxCard
+                key={`${item.media_type}_${item.id}`}
+                item={item}
+                onClick={() => preview(item, rd)}
+                cert={rd.cert}
+                restricted={rd.restricted}
+              />
+            );
+          })}
+        </NxRow>
+      );
     const cards = items.map((item) => {
       const type = item.media_type === "tv" ? "tv" : "movie";
       const rd = enrichedRatingsMap[`${type}_${item.id}`] || {};
@@ -221,24 +246,18 @@ export default function HomePage({
         />
       );
     });
-    if (viewMode === "list")
-      return (
-        <section key={key} className="halo-section">
-          <div className="halo-section__head">
-            <h2 className="halo-section__title">{title}</h2>
-          </div>
-          <div className="cards-grid halo-grid">{cards}</div>
-        </section>
-      );
     return (
-      <HaloRail key={key} title={title}>
-        {cards}
-      </HaloRail>
+      <section key={key} className="halo-section">
+        <div className="halo-section__head">
+          <h2 className="halo-section__title">{title}</h2>
+        </div>
+        <div className="cards-grid halo-grid">{cards}</div>
+      </section>
     );
   };
 
   return (
-    <div className="fade-in halo-home">
+    <div className="fade-in halo-home nx-home">
       {/* ── Offline ── */}
       {offline && (
         <div
@@ -277,11 +296,18 @@ export default function HomePage({
 
       {/* ── Hero (always first) ── */}
       {!loading && heroItems.length > 0 && (
-        <HaloHero
+        <NxHero
           items={heroItems}
-          onSelect={onSelect}
+          onSelect={(s) =>
+            preview(s, enrichedRatingsMap[`${s.media_type === "tv" ? "tv" : "movie"}_${s.id}`])
+          }
+          onPlay={onPlay}
+          matchFor={(s) => matchScore(s, aff)}
           isSaved={isSaved}
           onToggleSave={onToggleSave}
+          ratingFor={(s) =>
+            enrichedRatingsMap[`${s.media_type === "tv" ? "tv" : "movie"}_${s.id}`]?.cert
+          }
         />
       )}
 
@@ -292,22 +318,39 @@ export default function HomePage({
         if (id === "continue") {
           if (inProgress.length === 0) return null;
           return (
-            <HaloRail key="continue" title={t("home.upNext")} variant="wide">
+            <NxRow key="continue" title={t("home.upNext")} variant="wide">
               {inProgress.map((item) => {
                 const pk =
                   item.media_type === "movie"
                     ? `movie_${item.id}`
                     : `tv_${item.id}_s${item.season}e${item.episode}`;
                 return (
-                  <HaloWideCard
-                    key={pk}
+                  <div className="nx-upnext" key={pk}>
+                  <NxCard
+                    wide
                     item={item}
                     progress={progress[pk] || 0}
-                    onClick={() => onSelect(item)}
+                    meta={
+                      item.media_type === "tv" && item.season != null
+                        ? `S${item.season} · E${item.episode}`
+                        : undefined
+                    }
+                    onClick={() => (onPlay ? onPlay(item) : onSelect(item))}
                   />
+                  {onHideUpNext && (
+                    <button
+                      className="nx-upnext__x"
+                      onClick={() => onHideUpNext(pk)}
+                      aria-label={t("home.hideUpNext", { title: item.title || item.name })}
+                      title={t("home.hideUpNext", { title: item.title || item.name })}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </button>
+                  )}
+                  </div>
                 );
               })}
-            </HaloRail>
+            </NxRow>
           );
         }
 
@@ -323,10 +366,41 @@ export default function HomePage({
             ? renderRow("recommended", t("home.recommended"), rest)
             : null;
         }
-        if (id === "trendingMovies")
-          return renderRow("trendingMovies", t("home.trendingMovies"), trendingMovieItems);
-        if (id === "trendingTV")
-          return renderRow("trendingTV", t("home.trendingTV"), trendingTVItems);
+        if (id === "trendingMovies") {
+          // Today's ten most popular films, numbered
+          const top = trendingMovieItems.filter((i) => !itemRestricted(i));
+          if (viewMode === "list" || top.length < 5)
+            return renderRow("trendingMovies", t("home.trendingMovies"), top);
+          return (
+            <NxRow key="trendingMovies" title={t("home.top10")} variant="top">
+              {top.slice(0, 10).map((item, n) => (
+                <NxTopCard
+                  key={`${item.media_type}_${item.id}`}
+                  item={item}
+                  rank={n + 1}
+                  onClick={() => preview(item, enrichedRatingsMap[`movie_${item.id}`])}
+                />
+              ))}
+            </NxRow>
+          );
+        }
+        if (id === "trendingTV") {
+          const top = trendingTVItems.filter((i) => !itemRestricted(i) && !isDisliked(i));
+          if (viewMode === "list" || top.length < 5)
+            return renderRow("trendingTV", t("home.trendingTV"), top);
+          return (
+            <NxRow key="trendingTV" title={t("home.top10tv")} variant="top">
+              {top.slice(0, 10).map((item, n) => (
+                <NxTopCard
+                  key={`${item.media_type}_${item.id}`}
+                  item={item}
+                  rank={n + 1}
+                  onClick={() => preview(item, enrichedRatingsMap[`tv_${item.id}`])}
+                />
+              ))}
+            </NxRow>
+          );
+        }
         if (id === "topRated")
           return renderRow("topRated", t("home.topRated"), topRatedItems);
         if (id === "becauseSearched")

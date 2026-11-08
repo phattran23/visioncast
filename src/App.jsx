@@ -33,8 +33,7 @@ import {
   clearActivity as clearDiscordActivity,
 } from "./utils/discordPresence";
 
-import VisionDock from "./components/VisionDock";
-import { VisionCastMark, VisionCastWordmark, BackIcon } from "./components/Icons";
+import TopNav from "./components/TopNav";
 import { useLang, getSubtitleLang, LANG_EVENT } from "./utils/i18n";
 import AuthScreen from "./components/AuthScreen";
 import { getAuthMode, startSync } from "./utils/account";
@@ -52,6 +51,12 @@ const LibraryPage = lazy(() => import("./pages/LibraryPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const DownloadsPage = lazy(() => import("./pages/DownloadsPage"));
 const BrowsePage = lazy(() => import("./pages/BrowsePage"));
+const NewHotPage = lazy(() => import("./pages/NewHotPage"));
+import NxPreview from "./components/NxPreview";
+import PickForMe from "./components/PickForMe";
+import { buildAffinity, RATINGS_EVENT } from "./utils/taste";
+import { takeDueReminders } from "./utils/reminders";
+import { imgUrl as nxImg } from "./utils/api";
 
 export default function App() {
   const uiLang = useLang();
@@ -682,9 +687,14 @@ export default function App() {
   }, []);
 
   const navigate = useCallback((pg, data = null) => {
+    // "Play now" applies once: going back to that title shouldn't restart it
+    const cur = selectedRef.current;
     setNavStack((prev) => [
       ...prev,
-      { page: pageRef.current, selected: selectedRef.current },
+      {
+        page: pageRef.current,
+        selected: cur?._autoplay ? { ...cur, _autoplay: undefined } : cur,
+      },
     ]);
     setSelected(data);
     setPage(pg);
@@ -707,9 +717,7 @@ export default function App() {
   const [playingKey, setPlayingKey] = useState(null);
   useEffect(() => {
     setTitles((prev) => {
-      let next = prev.filter(
-        (e) => e.key === currentTitleKey || e.key === playingKey,
-      );
+      let next = prev.filter((e) => e.key === currentTitleKey);
       if (currentTitleKey && !next.some((e) => e.key === currentTitleKey))
         next = [...next, { key: currentTitleKey, page, selected }];
       return next.length === prev.length && next.every((e, i) => e === prev[i])
@@ -717,84 +725,16 @@ export default function App() {
         : next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTitleKey]);
+  // No mini player: a title left while playing stops
+  useEffect(() => {
+    if (playingKey && playingKey !== currentTitleKey) setPlayingKey(null);
   }, [currentTitleKey, playingKey]);
   const titlePlaying = useCallback(
     (key) => (on) =>
       setPlayingKey((cur) => (on ? key : cur === key ? null : cur)),
     [],
   );
-
-  // Mini player position/size: { x, y, w } in px (null = default corner).
-  // Dragged by its title bar, resized from the corner handle, kept on screen
-  // and remembered. The video keeps 16:9, so height follows width.
-  const MINI_BAR_H = 44;
-  const [miniBox, setMiniBox] = useState(() => storage.get("miniPlayerBox"));
-  const miniBoxRef = useRef(miniBox);
-  const clampMini = useCallback((b) => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const w = Math.round(Math.min(Math.max(b.w, 220), Math.min(960, vw - 16)));
-    const h = (w * 9) / 16 + MINI_BAR_H;
-    return {
-      w,
-      x: Math.round(Math.min(Math.max(b.x, 8), vw - w - 8)),
-      y: Math.round(Math.min(Math.max(b.y, 8), Math.max(8, vh - h - 8))),
-    };
-  }, []);
-  const updateMini = useCallback((b) => {
-    miniBoxRef.current = b;
-    setMiniBox(b);
-  }, []);
-  useEffect(() => {
-    if (!miniBox) return;
-    const onResize = () => updateMini(clampMini(miniBoxRef.current));
-    window.addEventListener("resize", onResize);
-    onResize();
-    return () => window.removeEventListener("resize", onResize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!!miniBox]);
-
-  const startMiniGesture = useCallback(
-    (e, mode) => {
-      if (e.pointerType === "mouse" && e.button !== 0) return;
-      if (mode === "move" && e.target.closest("button")) return;
-      const handle = e.currentTarget;
-      const host = handle.closest(".vc-mini-host");
-      if (!host) return;
-      e.preventDefault();
-      const r = host.getBoundingClientRect();
-      const start = { px: e.clientX, py: e.clientY, x: r.left, y: r.top, w: r.width };
-      handle.setPointerCapture?.(e.pointerId);
-      host.classList.add("is-dragging");
-      const move = (ev) => {
-        const dx = ev.clientX - start.px;
-        const dy = ev.clientY - start.py;
-        updateMini(
-          clampMini(
-            mode === "move"
-              ? { x: start.x + dx, y: start.y + dy, w: start.w }
-              : // grow with whichever axis moved more (in 16:9 terms)
-                { x: start.x, y: start.y, w: start.w + Math.max(dx, (dy * 16) / 9) },
-          ),
-        );
-      };
-      const end = () => {
-        handle.removeEventListener("pointermove", move);
-        handle.removeEventListener("pointerup", end);
-        handle.removeEventListener("pointercancel", end);
-        host.classList.remove("is-dragging");
-        if (miniBoxRef.current) storage.set("miniPlayerBox", miniBoxRef.current);
-      };
-      handle.addEventListener("pointermove", move);
-      handle.addEventListener("pointerup", end);
-      handle.addEventListener("pointercancel", end);
-    },
-    [clampMini, updateMini],
-  );
-  const resetMini = useCallback(() => {
-    updateMini(null);
-    storage.remove("miniPlayerBox");
-  }, [updateMini]);
 
   // Each page starts at the top; reopening a title that is still playing
   // scrolls straight to its player (VidSrc pauses when its player is off-screen)
@@ -804,7 +744,7 @@ export default function App() {
     if (currentTitleKey && currentTitleKey === playingKey) {
       requestAnimationFrame(() =>
         main
-          .querySelector(":scope > div:not(.vc-mini-host) .player-wrap")
+          .querySelector(".player-wrap")
           ?.scrollIntoView({ block: "center" }),
       );
     } else {
@@ -812,6 +752,22 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, selected]);
+
+  // While the page (or a rail) is still scrolling, clicks on titles are
+  // ignored for a moment so a flick + tap doesn't open the wrong film
+  useEffect(() => {
+    let t = null;
+    const onScroll = () => {
+      document.body.classList.add("vc-scrolling");
+      clearTimeout(t);
+      t = setTimeout(() => document.body.classList.remove("vc-scrolling"), 160);
+    };
+    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener("scroll", onScroll, { capture: true });
+      clearTimeout(t);
+    };
+  }, []);
 
   // Hide the dock while a video is full screen
   useEffect(() => {
@@ -860,11 +816,13 @@ export default function App() {
 
   // ── Controller / gamepad navigation ─────────────────────────────────────
   const [gamepadEnabled, setGamepadEnabled] = useState(
-    () => storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) !== false, // default on
+    // Off by default on the web: phantom "gamepads" (some mice/headsets)
+    // moved the focus and clicked titles on their own
+    () => storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) === true,
   );
   useEffect(() => {
     const handler = () =>
-      setGamepadEnabled(storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) !== false);
+      setGamepadEnabled(storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) === true);
     window.addEventListener("streambert:gamepad-settings-changed", handler);
     return () =>
       window.removeEventListener(
@@ -1072,15 +1030,30 @@ export default function App() {
     [history],
   );
 
+  // "Up next" entries the viewer removed from the row (synced)
+  const [upNextHidden, setUpNextHidden] = useState(
+    () => storage.get("upNextHidden") || {},
+  );
+  const hideUpNext = useCallback((pk) => {
+    setUpNextHidden((prev) => {
+      const next = { ...prev, [pk]: Date.now() };
+      storage.set("upNextHidden", next);
+      return next;
+    });
+  }, []);
+
   // Filter by progress/watched
   const inProgress = useMemo(
     () =>
       historyWithKeys.filter((h) => {
         if (watched[h._pk]) return false;
+        // Hidden until the viewer watches it again (newer history entry)
+        if (upNextHidden[h._pk] && upNextHidden[h._pk] > (h.watchedAt || 0))
+          return false;
         const pct = progress[h._pk];
         return pct != null && pct > 2 && pct < 98;
       }),
-    [historyWithKeys, progress, watched],
+    [historyWithKeys, progress, watched, upNextHidden],
   );
 
   // Memoized, avoids re-mapping on every download-progress event
@@ -1117,6 +1090,70 @@ export default function App() {
     },
     [navigate],
   );
+
+  // ── Preview, pick-for-me, play-now, reminders ───────────────────────────
+  const [preview, setPreview] = useState(null); // { item, meta }
+  const [showPick, setShowPick] = useState(false);
+  const [dueReminders, setDueReminders] = useState([]);
+  const [ratingsTick, setRatingsTick] = useState(0);
+  useEffect(() => {
+    const on = () => setRatingsTick((n) => n + 1);
+    window.addEventListener(RATINGS_EVENT, on);
+    return () => window.removeEventListener(RATINGS_EVENT, on);
+  }, []);
+  const aff = useMemo(
+    () => buildAffinity({ history, saved: savedList }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [history, savedList, ratingsTick],
+  );
+  const openPreview = useCallback((item, meta = {}) => {
+    setShowSearch(false);
+    setPreview({ item: { ...item, media_type: item.media_type === "tv" ? "tv" : "movie" }, meta });
+  }, []);
+  // Open a title and start playing right away. Series resume the last
+  // episode watched (or start at S1 E1).
+  const playTitle = useCallback(
+    (item) => {
+      setPreview(null);
+      setShowPick(false);
+      const type = item.media_type === "tv" ? "tv" : "movie";
+      let target = { ...item, media_type: type };
+      if (type === "tv" && item.episode == null) {
+        const last = [...history]
+          .filter((h) => h.media_type === "tv" && h.id === item.id && h.episode != null)
+          .sort((a, b) => (b.watchedAt || 0) - (a.watchedAt || 0))[0];
+        if (last) target = { ...target, season: last.season, episode: last.episode };
+      }
+      navigate(type, { ...target, _autoplay: Date.now() });
+    },
+    [history, navigate],
+  );
+  const openTitle = useCallback(
+    (item) => {
+      setPreview(null);
+      setShowPick(false);
+      handleSelectResult(item);
+    },
+    [handleSelectResult],
+  );
+  // Reminders whose release day has come fire once when the app opens
+  useEffect(() => {
+    const id = setTimeout(() => setDueReminders(takeDueReminders()), 1500);
+    return () => clearTimeout(id);
+  }, []);
+  // "/" opens search (outside text fields)
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+      const tag = (e.target?.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || e.target?.isContentEditable) return;
+      e.preventDefault();
+      setPreview(null);
+      setShowSearch(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // Props for a movie/TV page entry in the title list
   const titleProps = (t) => ({
@@ -1162,46 +1199,31 @@ export default function App() {
     <ErrorBoundary>
       {hasCustomTitlebar && <WindowTitlebar />}
       <div>
-        <div className="main">
-          <VisionDock
+        <div
+          className={`main${
+            page === "home" || (currentTitleKey && currentTitleKey !== playingKey)
+              ? " is-flush"
+              : ""
+          }`}
+        >
+          <TopNav
             page={page}
+            canBack={navStack.length > 0}
+            onBack={() => {
+              setShowSearch(false);
+              navigateBack();
+            }}
             onNavigate={(...args) => {
               setShowSearch(false);
               navigate(...args);
             }}
             onSearch={() => setShowSearch((v) => !v)}
             searchOpen={showSearch}
+            onPick={() => {
+              setShowSearch(false);
+              setShowPick(true);
+            }}
           />
-
-          {/* Brand bar: back (when possible) + VisionCast logo, top left */}
-          <header className="vc-brandbar">
-            {navStack.length > 0 && (
-              <button
-                className="vc-back glass"
-                onClick={() => {
-                  setShowSearch(false);
-                  navigateBack();
-                }}
-                aria-label={uiLang === "vi" ? "Quay lại" : "Back"}
-                title="Ctrl+Z"
-              >
-                <BackIcon />
-              </button>
-            )}
-            <button
-              className="vc-brand"
-              onClick={() => {
-                setShowSearch(false);
-                navigate("home");
-              }}
-              aria-label="VisionCast home"
-            >
-              <span className="vc-brand__mark">
-                <VisionCastMark animated />
-              </span>
-              <VisionCastWordmark />
-            </button>
-          </header>
 
           {/* ── API key status banner ── */}
           {/* Suspense boundary: lazy page chunks are fetched on first visit */}
@@ -1264,66 +1286,30 @@ export default function App() {
                 isSaved={isSaved}
                 onToggleSave={toggleSave}
                 saved={savedList}
+                aff={aff}
+                onPreview={openPreview}
+                onPlay={playTitle}
+                onHideUpNext={hideUpNext}
+              />
+            )}
+            {page === "new" && (
+              <NewHotPage
+                apiKey={apiKey}
+                aff={aff}
+                onPreview={openPreview}
+                onPlay={playTitle}
               />
             )}
             {titles
-              .filter((t) => t.key === currentTitleKey || t.key === playingKey)
+              .filter((t) => t.key === currentTitleKey)
               .map((t) => {
-              const isMini = t.key !== currentTitleKey;
-              const Page = t.page === "tv" ? TVPage : MoviePage;
-              return (
-                <div
-                  key={t.key}
-                  className={isMini ? "vc-mini-host" : undefined}
-                  style={
-                    isMini && miniBox
-                      ? { left: miniBox.x, top: miniBox.y, right: "auto", bottom: "auto", width: miniBox.w }
-                      : undefined
-                  }
-                >
-                  {isMini && (
-                    <div
-                      className="vc-mini-bar"
-                      onPointerDown={(e) => startMiniGesture(e, "move")}
-                      onDoubleClick={(e) => !e.target.closest("button") && resetMini()}
-                      title={uiLang === "vi" ? "Kéo để di chuyển · nhấp đúp để đặt lại" : "Drag to move · double-click to reset"}
-                    >
-                      <span className="vc-mini-title">
-                        {t.selected.title || t.selected.name}
-                      </span>
-                      <button
-                        className="vc-mini-btn"
-                        onClick={() => navigate(t.page, t.selected)}
-                        aria-label="Open player"
-                        title="Open"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7" /></svg>
-                      </button>
-                      <button
-                        className="vc-mini-btn"
-                        onClick={() => setPlayingKey(null)}
-                        aria-label="Close player"
-                        title="Close"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-                      </button>
-                    </div>
-                  )}
-                  <Page {...titleProps(t)} />
-                  {isMini && (
-                    <span
-                      className="vc-mini-resize"
-                      onPointerDown={(e) => startMiniGesture(e, "resize")}
-                      role="separator"
-                      aria-label={uiLang === "vi" ? "Kéo để đổi kích thước" : "Drag to resize"}
-                      title={uiLang === "vi" ? "Kéo để đổi kích thước" : "Drag to resize"}
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M20 12l-8 8M20 18l-2 2M20 6L6 20" /></svg>
-                    </span>
-                  )}
-                </div>
-              );
-            })}
+                const Page = t.page === "tv" ? TVPage : MoviePage;
+                return (
+                  <div key={t.key}>
+                    <Page {...titleProps(t)} />
+                  </div>
+                );
+              })}
             {(page === "films" || page === "series") && (
               <BrowsePage
                 key={page}
@@ -1390,6 +1376,64 @@ export default function App() {
             onClose={() => setShowSearch(false)}
             offline={offline}
           />
+        )}
+        {preview && (
+          <NxPreview
+            item={preview.item}
+            meta={preview.meta}
+            apiKey={apiKey}
+            aff={aff}
+            onClose={() => setPreview(null)}
+            onPlay={playTitle}
+            onOpen={openTitle}
+            onPreview={(i) => openPreview(i)}
+            isSaved={isSaved}
+            onToggleSave={toggleSave}
+          />
+        )}
+        {showPick && (
+          <PickForMe
+            apiKey={apiKey}
+            aff={aff}
+            history={history}
+            onClose={() => setShowPick(false)}
+            onPlay={playTitle}
+            onPreview={(i) => {
+              setShowPick(false);
+              openPreview(i);
+            }}
+          />
+        )}
+        {dueReminders.length > 0 && (
+          <div className="nx-toast" role="status">
+            {dueReminders[0].poster_path && (
+              <img src={nxImg(dueReminders[0].poster_path, "w92")} alt="" />
+            )}
+            <div className="nx-toast__text">
+              <b>{uiLang === "vi" ? "Đã ra mắt" : "Out now"}</b>
+              <span>
+                {dueReminders[0].title}
+                {dueReminders.length > 1 ? ` +${dueReminders.length - 1}` : ""}
+              </span>
+            </div>
+            <button
+              className="nx-toast__go"
+              onClick={() => {
+                const r = dueReminders[0];
+                setDueReminders((l) => l.slice(1));
+                openPreview(r);
+              }}
+            >
+              {uiLang === "vi" ? "Xem" : "View"}
+            </button>
+            <button
+              className="nx-toast__x"
+              onClick={() => setDueReminders((l) => l.slice(1))}
+              aria-label={uiLang === "vi" ? "Đóng" : "Dismiss"}
+            >
+              ✕
+            </button>
+          </div>
         )}
         {updateBanner && (
           <div

@@ -19,6 +19,9 @@ const PERSONAL_KEYS = [
   "watched",
   "searchPicks",
   "searchHistory",
+  "ratings",
+  "reminders",
+  "upNextHidden",
 ];
 // Preferences that also follow the account
 const PREF_KEYS = [

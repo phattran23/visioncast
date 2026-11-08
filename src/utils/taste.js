@@ -67,6 +67,16 @@ export function getSeeds({ history = [], saved = [] }) {
     .sort((a, b) => (b.watchedAt || 0) - (a.watchedAt || 0))
     .slice(0, 10)
     .forEach((h, i) => add(h, 1.6 - i * 0.12));
+  // Thumbs: loved titles are the strongest seeds; disliked ones never seed
+  const ratings = storage.get("ratings") || {};
+  Object.values(ratings)
+    .filter((r) => r.v > 0)
+    .sort((a, b) => b.at - a.at)
+    .slice(0, 10)
+    .forEach((r) => add(r, r.v === 2 ? 3.6 : 2.2));
+  Object.values(ratings)
+    .filter((r) => r.v < 0)
+    .forEach((r) => seeds.delete(keyOf(r)));
   return [...seeds.values()].sort((a, b) => b.weight - a.weight);
 }
 
@@ -113,7 +123,11 @@ export async function buildRecommendations({ apiKey, history = [], saved = [] })
   seeds = [...seeds, ...(await seedsFromTerms(apiKey, known))].slice(0, 8);
   if (seeds.length === 0) return { items: [], seeds, because: null };
 
-  const exclude = new Set([...known, ...history.map(keyOf)]);
+  const exclude = new Set([
+    ...known,
+    ...history.map(keyOf),
+    ...Object.keys(storage.get("ratings") || {}),
+  ]);
   const scores = new Map();
 
   const lists = await Promise.all(
@@ -208,4 +222,82 @@ export async function buildTopGenre({ apiKey, seeds }) {
     .slice(0, 20);
   if (!name || items.length < 4) return null;
   return { name, items };
+}
+
+// ── Ratings: not for me (-1) / like (1) / love (2) ───────────────────────────
+// Stronger than any other signal: loved titles seed recommendations, disliked
+// ones (and their genres) are pushed away everywhere.
+const RATINGS_KEY = "ratings";
+export const RATINGS_EVENT = "visioncast:ratings";
+
+export function getRatings() {
+  return storage.get(RATINGS_KEY) || {};
+}
+export function getRating(item) {
+  return item ? getRatings()[keyOf(item)]?.v || 0 : 0;
+}
+/** Set (or clear with 0 / the same value) the user's rating for a title. */
+export function rateTitle(item, v) {
+  if (!item?.id) return 0;
+  const all = { ...getRatings() };
+  const k = keyOf(item);
+  if (!v || all[k]?.v === v) delete all[k];
+  else
+    all[k] = {
+      id: item.id,
+      media_type: item.media_type === "tv" ? "tv" : "movie",
+      title: item.title || item.name,
+      genre_ids: item.genre_ids || (item.genres || []).map((g) => g.id),
+      v,
+      at: Date.now(),
+    };
+  storage.set(RATINGS_KEY, all);
+  window.dispatchEvent(new Event(RATINGS_EVENT));
+  return all[k]?.v || 0;
+}
+export function isDisliked(item) {
+  return getRating(item) === -1;
+}
+
+// ── Match score ("Hợp gu 92%") ──────────────────────────────────────────────
+// Genre affinity from everything the user showed interest in, minus what they
+// disliked. Returns { score, because } or null when we know too little.
+export function buildAffinity({ history = [], saved = [] }) {
+  const genres = new Map();
+  const seeds = getSeeds({ history, saved });
+  seeds.forEach((s) =>
+    (s.genre_ids || []).forEach((g, i) =>
+      genres.set(g, (genres.get(g) || 0) + s.weight * (i === 0 ? 1 : 0.6)),
+    ),
+  );
+  Object.values(getRatings()).forEach((r) => {
+    if (r.v >= 0) return;
+    (r.genre_ids || []).forEach((g) => genres.set(g, (genres.get(g) || 0) - 1.5));
+  });
+  const top = [...genres.values()].filter((w) => w > 0).sort((a, b) => b - a);
+  return { genres, top, seeds };
+}
+
+export function matchScore(item, aff) {
+  if (!item || !aff || aff.top.length === 0) return null;
+  if (getRating(item) === -1) return null;
+  const ids = item.genre_ids?.length ? item.genre_ids : (item.genres || []).map((g) => g.id);
+  if (!ids.length) return null;
+  const got = ids.reduce((s, g) => s + (aff.genres.get(g) || 0), 0);
+  const best = aff.top.slice(0, ids.length).reduce((s, w) => s + w, 0) || 1;
+  const fit = Math.max(-0.5, Math.min(1, got / best));
+  const quality = ((item.vote_average || 6.5) - 6.5) * 3;
+  const score = Math.round(Math.max(40, Math.min(99, 58 + fit * 38 + quality)));
+  // The seed sharing the most genres explains the match
+  let because = null;
+  let bestShared = 0;
+  for (const s of aff.seeds.slice(0, 10)) {
+    if (s.id === item.id) continue;
+    const shared = (s.genre_ids || []).filter((g) => ids.includes(g)).length;
+    if (shared > bestShared) {
+      bestShared = shared;
+      because = s.title;
+    }
+  }
+  return { score, because: fit > 0.2 ? because : null };
 }

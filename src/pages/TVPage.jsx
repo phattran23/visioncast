@@ -1537,11 +1537,13 @@ export default function TVPage({
   // (App.jsx) know to stand down while a video is actually playing.
   // Only active while the "controller support" setting is on.
   const [gamepadEnabled, setGamepadEnabled] = useState(
-    () => storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) !== false, // default on
+    // Off by default on the web: phantom "gamepads" (some mice/headsets)
+    // moved the focus and clicked titles on their own
+    () => storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) === true,
   );
   useEffect(() => {
     const handler = () =>
-      setGamepadEnabled(storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) !== false);
+      setGamepadEnabled(storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) === true);
     window.addEventListener("streambert:gamepad-settings-changed", handler);
     return () =>
       window.removeEventListener(
@@ -1598,6 +1600,8 @@ export default function TVPage({
       setResolveError(null);
       setSelectedEp(ep);
       setPlaying(true);
+      // Theater layout puts the player first: bring it into view
+      document.querySelector(".main")?.scrollTo({ top: 0, behavior: "smooth" });
       onHistory({
         ...d,
         media_type: "tv",
@@ -1609,6 +1613,21 @@ export default function TVPage({
     },
     [d, selectedSeason, onHistory],
   );
+
+  // Opened with "Play": start the resume episode (or the season's first)
+  const autoplayRef = useRef(null);
+  useEffect(() => {
+    if (!item._autoplay || autoplayRef.current === item._autoplay) return;
+    if (restricted || currentSeasonEpisodes.length === 0) return;
+    const target = item.episode != null ? Number(item.episode) : null;
+    const ep =
+      (target != null &&
+        currentSeasonEpisodes.find((e) => e.episode_number === target)) ||
+      currentSeasonEpisodes[0];
+    if (!ep) return;
+    autoplayRef.current = item._autoplay;
+    playEpisode(ep);
+  }, [item._autoplay, item.episode, restricted, currentSeasonEpisodes, playEpisode]);
 
   const nextEp = useMemo(() => {
     if (!selectedEp || !currentSeasonEpisodes) return null;
@@ -1708,7 +1727,7 @@ export default function TVPage({
     : false;
 
   return (
-    <div className="fade-in">
+    <div className={`fade-in vc-title${playing ? " is-playing" : ""}`}>
       {loading && (
         <div className="loader">
           <div className="spinner" />

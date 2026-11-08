@@ -52,11 +52,15 @@ export default function VisionDock({
   onNavigate,
   onSearch,
   searchOpen,
+  watching = false, // a title is playing on its own page: keep the dock tucked away
 }) {
   const t = useT();
   const lang = useLang();
   const [hovered, setHovered] = useState(null);
-  const [collapsed, setCollapsed] = useState(() => !!storage.get("dockCollapsed"));
+  const [userCollapsed, setCollapsed] = useState(() => !!storage.get("dockCollapsed"));
+  const [peek, setPeek] = useState(false);
+  useEffect(() => setPeek(false), [watching]);
+  const collapsed = userCollapsed || (watching && !peek);
   const dockRef = useRef(null);
   const lastTap = useRef(-1e9); // event timeStamp of the previous tap
   const ignoreClickUntil = useRef(0);
@@ -92,7 +96,8 @@ export default function VisionDock({
     if (Date.now() < ignoreClickUntil.current) return;
     if (collapsed) {
       lastTap.current = -1e9;
-      setDockCollapsed(false);
+      if (userCollapsed) setDockCollapsed(false);
+      else setPeek(true); // auto-tucked while watching: open just for now
     } else {
       // Wait a moment: a second tap means "hide the dock", not "go home"
       clearTimeout(homeTimer.current);

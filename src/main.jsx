@@ -7,6 +7,9 @@ import "./styles/halo-motion.css";
 import "./styles/auth.css";
 import "./styles/dock.css";
 import "./styles/filters.css";
+import "./styles/focus.css";
+import "./styles/nx.css";
+import "./styles/features.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

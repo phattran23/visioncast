@@ -520,11 +520,13 @@ export default function MoviePage({
   // ── Controller support: play/pause, seek, volume, fullscreen ─────────────
   // Only active while the "controller support" setting is on.
   const [gamepadEnabled, setGamepadEnabled] = useState(
-    () => storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) !== false, // default on
+    // Off by default on the web: phantom "gamepads" (some mice/headsets)
+    // moved the focus and clicked titles on their own
+    () => storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) === true,
   );
   useEffect(() => {
     const handler = () =>
-      setGamepadEnabled(storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) !== false);
+      setGamepadEnabled(storage.get(STORAGE_KEYS.GAMEPAD_ENABLED) === true);
     window.addEventListener("streambert:gamepad-settings-changed", handler);
     return () =>
       window.removeEventListener(
@@ -696,6 +698,8 @@ export default function MoviePage({
     setInterceptedSubs([]);
     setPlaying(true);
     onHistory({ ...d, media_type: "movie" });
+    // Theater layout puts the player first: bring it into view
+    document.querySelector(".main")?.scrollTo({ top: 0, behavior: "smooth" });
   }, [d, onHistory]);
 
   // Intercept fullscreen requests from embedded players (vidsrc / 2embed use
@@ -768,6 +772,15 @@ export default function MoviePage({
     return new Date(d.release_date) > today;
   }, [d.release_date]);
 
+  // Opened with "Play" (preview, billboard, Up next): start right away
+  const autoplayRef = useRef(null);
+  useEffect(() => {
+    if (!item._autoplay || autoplayRef.current === item._autoplay) return;
+    if (!details || restricted || isUnreleased) return;
+    autoplayRef.current = item._autoplay;
+    handlePlay();
+  }, [item._autoplay, details, restricted, isUnreleased, handlePlay]);
+
   // Check if this movie is already downloaded or currently downloading
   const movieDownload = (downloads || []).find(
     (dl) =>
@@ -779,7 +792,7 @@ export default function MoviePage({
   );
 
   return (
-    <div className="fade-in">
+    <div className={`fade-in vc-title${playing ? " is-playing" : ""}`}>
       <div className="detail-hero">
         <div
           className="detail-bg"

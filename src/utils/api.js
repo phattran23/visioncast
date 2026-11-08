@@ -69,13 +69,18 @@ function _releaseSlot() {
   }
 }
 
-export const tmdbFetch = async (path, apiKey) => {
+// opts.priority: something the viewer is waiting on right now (the preview
+// window). It skips the queue instead of waiting behind background work such
+// as the home page's age-rating lookups.
+export const tmdbFetch = async (path, apiKey, opts = {}) => {
   const localizedPath = withLanguage(path);
   const cacheKey = `${apiKey}|${localizedPath}`;
   const cached = _tmdbCache.get(cacheKey);
   if (cached && Date.now() < cached.expiresAt) return cached.data;
 
-  await _acquireSlot();
+  const priority = opts?.priority === true;
+  if (priority) _inflight++;
+  else await _acquireSlot();
 
   let res;
   try {
