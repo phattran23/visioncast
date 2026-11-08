@@ -75,6 +75,7 @@ const DICT = {
     "auth.err.credentials_required": "Please enter your email and password.",
     "auth.err.credentials_wrong": "Wrong email or password.",
     "auth.err.too_many_attempts": "Too many attempts. Try again in 15 minutes.",
+    "auth.err.too_many_signups": "Too many new accounts from this network. Try again in an hour.",
     "auth.err.network": "Can't reach VisionCast. Check your connection.",
     "auth.err.server_error": "Something went wrong. Please try again.",
     // account (settings)
@@ -341,6 +342,7 @@ const DICT = {
     "auth.err.credentials_required": "Vui lòng nhập email và mật khẩu.",
     "auth.err.credentials_wrong": "Sai email hoặc mật khẩu.",
     "auth.err.too_many_attempts": "Thử quá nhiều lần. Vui lòng thử lại sau 15 phút.",
+    "auth.err.too_many_signups": "Mạng này đã tạo quá nhiều tài khoản. Vui lòng thử lại sau 1 giờ.",
     "auth.err.network": "Không kết nối được VisionCast. Kiểm tra mạng của bạn.",
     "auth.err.server_error": "Đã có lỗi xảy ra. Vui lòng thử lại.",
     "account.title": "Tài khoản",

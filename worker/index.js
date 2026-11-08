@@ -12,11 +12,30 @@
 // Passwords are stored as PBKDF2-SHA256 hashes with a per-user random salt.
 // Sessions are random 256-bit tokens kept in an HttpOnly, Secure cookie.
 
+// Security headers for responses the Worker builds itself (share cards, API);
+// static files get the same set from public/_headers
+const SECURITY_HEADERS = {
+  "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; font-src 'self' data:; connect-src 'self' https:; frame-src https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests",
+  "x-frame-options": "DENY",
+  "x-content-type-options": "nosniff",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+  "cross-origin-opener-policy": "same-origin-allow-popups",
+  "strict-transport-security": "max-age=63072000; includeSubDomains",
+};
+
 const SESSION_COOKIE = "vc_session";
 const SESSION_DAYS = 30;
 const PBKDF2_ITERATIONS = 100000; // Workers' maximum
 const MAX_DATA_BYTES = 512 * 1024;
-const MAX_LOGIN_FAILS = 8; // per email per 15 minutes
+// Rate limits (sliding windows, counted in D1)
+const WINDOW_LOGIN = 15 * 60 * 1000;
+const MAX_FAILS_EMAIL_CLIENT = 8; // wrong passwords for one email from one client
+const MAX_FAILS_CLIENT = 30; // wrong passwords from one client, any email
+const MAX_FAILS_EMAIL = 40; // wrong passwords for one email, everyone together
+const WINDOW_SIGNUP = 60 * 60 * 1000;
+const MAX_SIGNUPS_CLIENT = 5; // new accounts per client per hour
+const MAX_SIGNUPS_TOTAL = 200; // new accounts per hour, whole site
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS users (
@@ -37,10 +56,15 @@ const SCHEMA = [
      data TEXT NOT NULL,
      updated_at INTEGER NOT NULL
    )`,
-  `CREATE TABLE IF NOT EXISTS login_fails (
-     email TEXT NOT NULL,
+  // One row per counted event: "fail:email:<e>", "fail:client:<c>",
+  // "fail:pair:<e>|<c>", "signup:client:<c>", "signup:all"
+  `CREATE TABLE IF NOT EXISTS rate_events (
+     bucket TEXT NOT NULL,
      at INTEGER NOT NULL
    )`,
+  `CREATE INDEX IF NOT EXISTS rate_events_bucket ON rate_events (bucket, at)`,
+  `CREATE INDEX IF NOT EXISTS rate_events_at ON rate_events (at)`,
+  `DROP TABLE IF EXISTS login_fails`,
 ];
 
 let schemaReady = false;
@@ -57,9 +81,36 @@ const json = (body, status = 200, headers = {}) =>
     headers: {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
       ...headers,
     },
   });
+
+// ── rate limiting ───────────────────────────────────────────────────────────
+// The client is identified by its IP. Requests from the Vercel mirror arrive
+// from Vercel's servers, which pass the visitor's IP in x-forwarded-for, so
+// that is folded into the key as well (CF IP + forwarded IP).
+function clientKey(req) {
+  const cf = req.headers.get("cf-connecting-ip") || "unknown";
+  const fwd = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim();
+  return fwd && fwd !== cf ? `${cf}>${fwd.slice(0, 64)}` : cf;
+}
+
+async function countEvents(db, bucket, since) {
+  const row = await db
+    .prepare("SELECT COUNT(*) AS n FROM rate_events WHERE bucket = ? AND at > ?")
+    .bind(bucket, since)
+    .first();
+  return row?.n || 0;
+}
+
+async function addEvents(db, buckets) {
+  const now = Date.now();
+  await db.batch(
+    buckets.map((b) => db.prepare("INSERT INTO rate_events (bucket, at) VALUES (?, ?)").bind(b, now)),
+  );
+}
+
 
 const fail = (status, error) => json({ error }, status);
 
@@ -153,6 +204,15 @@ async function signup(req, db) {
   if (!validEmail(email)) return fail(400, "email_invalid");
   if (password.length < 8 || password.length > 200) return fail(400, "password_short");
 
+  const client = clientKey(req);
+  const since = Date.now() - WINDOW_SIGNUP;
+  const [mine, all] = await Promise.all([
+    countEvents(db, `signup:client:${client}`, since),
+    countEvents(db, "signup:all", since),
+  ]);
+  if (mine >= MAX_SIGNUPS_CLIENT || all >= MAX_SIGNUPS_TOTAL)
+    return fail(429, "too_many_signups");
+
   const exists = await db.prepare("SELECT 1 FROM users WHERE email = ?").bind(email).first();
   if (exists) return fail(409, "email_taken");
 
@@ -165,6 +225,7 @@ async function signup(req, db) {
     )
     .bind(id, email, name, passHash, salt, Date.now())
     .run();
+  await addEvents(db, [`signup:client:${client}`, "signup:all"]);
   const token = await createSession(db, id);
   return json({ user: { id, name, email } }, 201, {
     "set-cookie": sessionCookie(token, SESSION_DAYS * 86400),
@@ -177,21 +238,28 @@ async function login(req, db) {
   const password = String(body?.password || "");
   if (!validEmail(email) || !password) return fail(400, "credentials_required");
 
-  const since = Date.now() - 15 * 60 * 1000;
-  const fails = await db
-    .prepare("SELECT COUNT(*) AS n FROM login_fails WHERE email = ? AND at > ?")
-    .bind(email, since)
-    .first();
-  if ((fails?.n || 0) >= MAX_LOGIN_FAILS) return fail(429, "too_many_attempts");
+  // Wrong passwords are counted per email+client, so a stranger can't lock
+  // someone out with a few bad guesses; per client (guessing many accounts)
+  // and per email from everyone (slow distributed guessing) are capped too
+  const client = clientKey(req);
+  const since = Date.now() - WINDOW_LOGIN;
+  const [pair, fromClient, forEmail] = await Promise.all([
+    countEvents(db, `fail:pair:${email}|${client}`, since),
+    countEvents(db, `fail:client:${client}`, since),
+    countEvents(db, `fail:email:${email}`, since),
+  ]);
+  if (pair >= MAX_FAILS_EMAIL_CLIENT || fromClient >= MAX_FAILS_CLIENT || forEmail >= MAX_FAILS_EMAIL)
+    return fail(429, "too_many_attempts");
 
   const user = await db.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
   // Hash even when the user doesn't exist so timing doesn't reveal accounts
   const hash = await hashPassword(password, user?.salt || "00".repeat(16));
   if (!user || !safeEqual(hash, user.pass_hash)) {
-    await db.prepare("INSERT INTO login_fails (email, at) VALUES (?, ?)").bind(email, Date.now()).run();
+    await addEvents(db, [`fail:pair:${email}|${client}`, `fail:client:${client}`, `fail:email:${email}`]);
     return fail(401, "credentials_wrong");
   }
-  await db.prepare("DELETE FROM login_fails WHERE email = ?").bind(email).run();
+  // Signed in: this client's misses for this account no longer count
+  await db.prepare("DELETE FROM rate_events WHERE bucket = ?").bind(`fail:pair:${email}|${client}`).run();
   const token = await createSession(db, user.id);
   return json({ user: publicUser(user) }, 200, {
     "set-cookie": sessionCookie(token, SESSION_DAYS * 86400),
@@ -267,6 +335,14 @@ async function handleApi(req, env, url) {
     return fail(403, "bad_origin");
 
   const route = `${req.method} ${url.pathname}`;
+  if (route === "POST /api/signup" || route === "POST /api/login") {
+    // Housekeeping now and then: old rate-limit events and expired sessions
+    if (Math.random() < 0.05)
+      await db.batch([
+        db.prepare("DELETE FROM rate_events WHERE at < ?").bind(Date.now() - 864e5),
+        db.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(Date.now()),
+      ]);
+  }
   if (route === "POST /api/signup") return signup(req, db);
   if (route === "POST /api/login") return login(req, db);
   if (route === "POST /api/logout") return logout(req, db);
@@ -364,6 +440,7 @@ async function shareCard(req, env, url, type, id) {
     .on("head", { element: (el) => el.append(tags.join("\n"), { html: true }) })
     .transform(page);
   const out = new Response(res.body, res);
+  for (const [k, v] of Object.entries(SECURITY_HEADERS)) out.headers.set(k, v);
   out.headers.set("content-type", "text/html; charset=utf-8");
   out.headers.set("cache-control", "public, max-age=600");
   return out;
