@@ -42,6 +42,7 @@ import SetupScreen from "./components/SetupScreen";
 import CloseConfirmModal from "./components/CloseConfirmModal";
 import UpdateModal from "./components/UpdateModal";
 import { useGamepadNav } from "./utils/useGamepadNav";
+import { Analytics } from "@vercel/analytics/react";
 
 // Lazy-loaded pages: each chunk is only downloaded when the user first visits
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -1197,6 +1198,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <Analytics />
       {hasCustomTitlebar && <WindowTitlebar />}
       <div>
         <div
