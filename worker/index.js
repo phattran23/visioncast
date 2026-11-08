@@ -234,16 +234,37 @@ async function putData(req, user, db) {
   return json({ updatedAt: now });
 }
 
+// Sites allowed to call the API: this Worker itself, the Vercel mirror (which
+// proxies /api/* here, see vercel.json) and anything listed in ALLOWED_ORIGINS
+const VERCEL_ORIGIN = /^https:\/\/visioncast(-[a-z0-9-]+)?\.vercel\.app$/;
+function originAllowed(origin, url, env) {
+  if (!origin || origin === url.origin) return true;
+  if (VERCEL_ORIGIN.test(origin)) return true;
+  const extra = String(env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return extra.includes(origin);
+}
+
 async function handleApi(req, env, url) {
+  // Public app config: the TMDB *read-only* token for builds made without
+  // one (Git-connected Cloudflare/Vercel builds). The same token ships inside
+  // the app bundle anyway; it only allows reading TMDB's public catalogue.
+  if (req.method === "GET" && url.pathname === "/api/config")
+    return json(
+      { tmdbToken: env.TMDB_TOKEN || null },
+      200,
+      { "cache-control": "public, max-age=3600" },
+    );
+
   const db = env.DB;
   if (!db) return fail(500, "no_database");
   await ensureSchema(db);
 
-  // Same-origin only for state-changing requests
-  if (req.method !== "GET") {
-    const origin = req.headers.get("origin");
-    if (origin && origin !== url.origin) return fail(403, "bad_origin");
-  }
+  // Same-site only for state-changing requests
+  if (req.method !== "GET" && !originAllowed(req.headers.get("origin"), url, env))
+    return fail(403, "bad_origin");
 
   const route = `${req.method} ${url.pathname}`;
   if (route === "POST /api/signup") return signup(req, db);

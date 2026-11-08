@@ -348,9 +348,19 @@ export default function App() {
   // ── Load API key from secure storage on startup ──
   useEffect(() => {
     let mounted = true;
-    secureStorage.get("apikey").then((val) => {
+    secureStorage.get("apikey").then(async (val) => {
       if (!mounted) return;
-      setApiKey(val || DEFAULT_TMDB_TOKEN);
+      let key = val || DEFAULT_TMDB_TOKEN;
+      // Builds made without VITE_TMDB_TOKEN (e.g. straight from GitHub on
+      // Vercel/Cloudflare) fetch the read token from the API instead
+      if (!key) {
+        try {
+          const r = await fetch("/api/config");
+          if (r.ok) key = (await r.json()).tmdbToken || null;
+        } catch {}
+        if (!mounted) return;
+      }
+      setApiKey(key);
       setApiKeyLoaded(true);
     });
     return () => {
