@@ -24,6 +24,11 @@
     }
 }
 
+/* No double-tap zoom (and taps respond without waiting for a second one) */
+html {
+    touch-action: manipulation;
+}
+
 /* The dock and the old brand bar are retired */
 .vc-dock,
 .vc-dock-ring,
