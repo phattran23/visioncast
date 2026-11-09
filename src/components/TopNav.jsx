@@ -85,7 +85,7 @@ export default function TopNav({ page, canBack, onBack, onNavigate, onSearch, se
 
   const avatar = (
     <button
-      className={`vc-nav__me${page === "settings" ? " on" : ""}`}
+      className={`vc-nav__me${account ? " has-account" : ""}${page === "settings" ? " on" : ""}`}
       onClick={() => go("settings")}
       aria-label={account ? `${account.name} · ${t("nav.settings")}` : t("nav.settings")}
       title={account ? account.name : t("nav.settings")}

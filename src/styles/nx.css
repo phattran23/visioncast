@@ -19,7 +19,7 @@
         --nav-h: 56px;
         --nx-x: 16px;
         --nx-gap: 8px;
-        --tabbar-space: calc(84px + env(safe-area-inset-bottom));
+        --tabbar-space: calc(78px + env(safe-area-inset-bottom));
         --dock-bottom: calc(6px + env(safe-area-inset-bottom));
     }
 }
@@ -205,12 +205,12 @@ body.vc-fullscreen .vc-tabs {
         display: none;
     }
     .vc-nav__brand {
-        font-size: 20px;
+        font-size: 19px;
         gap: 8px;
     }
     .vc-nav__mark {
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
     }
     .vc-nav__back {
         margin-right: -4px;
@@ -221,9 +221,30 @@ body.vc-fullscreen .vc-tabs {
     .vc-nav__back.is-root {
         display: none;
     }
+    /* Account: a light round button (orange only when signed in), so it
+       balances the logo instead of outweighing it */
     .vc-nav__me {
-        width: 32px;
-        height: 32px;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.14);
+        font-size: 15px;
+    }
+    .vc-nav__me svg {
+        width: 18px;
+        height: 18px;
+    }
+    .vc-nav__me.has-account {
+        background: var(--signal);
+    }
+    .vc-nav__me:hover,
+    .vc-nav__me.on {
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+    }
+    :root[data-theme="halo-light"] .vc-nav.is-solid .vc-nav__me:not(.has-account),
+    :root[data-theme="halo-light"] .main:not(.is-flush) .vc-nav__me:not(.has-account) {
+        background: rgba(0, 0, 0, 0.07);
+        color: var(--text);
     }
 
     .vc-nav__chips {
@@ -266,7 +287,9 @@ body.vc-fullscreen .vc-tabs {
         /* one column per tab, so the items stay centred */
         grid-auto-flow: column;
         grid-auto-columns: 1fr;
-        padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+        /* like iOS's own tab bar: ~49px of content, and the home-indicator
+           area below it is not padded on top of */
+        padding: 6px 4px max(6px, calc(env(safe-area-inset-bottom) - 12px));
         background: rgba(10, 10, 12, 0.94);
         -webkit-backdrop-filter: blur(20px) saturate(1.5);
         backdrop-filter: blur(20px) saturate(1.5);
@@ -283,7 +306,7 @@ body.vc-fullscreen .vc-tabs {
         align-items: center;
         justify-content: center;
         gap: 3px;
-        min-height: 50px;
+        min-height: 48px;
         border: 0;
         background: none;
         color: rgba(255, 255, 255, 0.56);
