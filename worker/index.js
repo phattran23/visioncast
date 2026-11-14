@@ -446,9 +446,59 @@ async function shareCard(req, env, url, type, id) {
   return out;
 }
 
+// ── TMDB relay ──────────────────────────────────────────────────────────────
+// Many networks (several Vietnamese ISPs among them) block api.themoviedb.org.
+// The app asks this Worker instead (same site, never blocked); the Worker
+// calls TMDB from Cloudflare with its own token and keeps answers in the edge
+// cache for a few minutes, so popular pages cost TMDB nothing.
+const TMDB_PATH = /^\/[A-Za-z0-9/_-]{1,160}$/;
+
+async function tmdbRelay(req, env, url, ctx) {
+  if (req.method !== "GET" && req.method !== "HEAD") return fail(405, "method_not_allowed");
+  // Only for VisionCast pages, not as a free proxy for other sites
+  if (req.headers.get("sec-fetch-site") === "cross-site") return fail(403, "bad_origin");
+  if (!env.TMDB_TOKEN) return fail(503, "no_tmdb_token");
+  const path = url.pathname.slice("/api/tmdb".length);
+  if (!TMDB_PATH.test(path) || url.search.length > 1000) return fail(400, "bad_path");
+
+  const upstream = `https://api.themoviedb.org/3${path}${url.search}`;
+  const cache = caches.default;
+  const key = new Request(upstream);
+  const hit = await cache.match(key);
+  if (hit) return hit;
+
+  let res;
+  try {
+    res = await fetch(upstream, {
+      headers: { Authorization: `Bearer ${env.TMDB_TOKEN}`, accept: "application/json" },
+    });
+  } catch {
+    return fail(502, "tmdb_unreachable");
+  }
+  const ttl = /^\/search\//.test(path) ? 300 : 900;
+  const out = new Response(res.body, {
+    status: res.status,
+    headers: {
+      "content-type": res.headers.get("content-type") || "application/json; charset=utf-8",
+      "cache-control": res.ok ? `public, max-age=${ttl}` : "no-store",
+      "x-content-type-options": "nosniff",
+    },
+  });
+  if (res.ok) ctx?.waitUntil(cache.put(key, out.clone()));
+  return out;
+}
+
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    if (url.pathname.startsWith("/api/tmdb/")) {
+      try {
+        return await tmdbRelay(req, env, url, ctx);
+      } catch (e) {
+        console.error(e);
+        return fail(502, "tmdb_unreachable");
+      }
+    }
     const m = url.pathname.match(/^\/(movie|tv)\/(\d+)\/?$/);
     if (m && req.method === "GET") {
       try {

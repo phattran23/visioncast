@@ -23,7 +23,7 @@ import {
   DEFAULT_THEME,
 } from "./utils/appearance";
 import { collectBackupData } from "./utils/backup";
-import { tmdbFetch, setApiErrorHandlers, imgUrl } from "./utils/api";
+import { tmdbFetch, tmdbRequest, setApiErrorHandlers, imgUrl } from "./utils/api";
 import { clearAppCaches } from "./utils/storage";
 import {
   readDiscordRpcSettings,
@@ -421,10 +421,7 @@ export default function App() {
     }
     setApiKeyStatus("checking");
     const controller = new AbortController();
-    fetch("https://api.themoviedb.org/3/configuration", {
-      headers: { Authorization: `Bearer ${apiKey}` },
-      signal: controller.signal,
-    })
+    tmdbRequest("/configuration", apiKey, { signal: controller.signal })
       .then((res) => {
         if (res.status === 401 || res.status === 403)
           setApiKeyStatus("invalid_token");

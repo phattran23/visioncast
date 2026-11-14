@@ -1,4 +1,37 @@
 const TMDB_BASE = "https://api.themoviedb.org/3";
+// Same-site relay on the Worker (worker/index.js). Used first on the built
+// site because many networks block api.themoviedb.org; the direct API is the
+// fallback. The route that worked is remembered for the session.
+const TMDB_RELAY = "/api/tmdb";
+let _tmdbRoute = import.meta.env.PROD ? "relay" : "direct";
+
+/** fetch() a TMDB path (with query) through whichever route works. */
+export async function tmdbRequest(pathAndQuery, apiKey, init = {}) {
+  const direct = () =>
+    fetch(`${TMDB_BASE}${pathAndQuery}`, {
+      ...init,
+      headers: { ...(init.headers || {}), Authorization: `Bearer ${apiKey}` },
+    });
+  if (_tmdbRoute === "direct") {
+    try {
+      return await direct();
+    } catch (e) {
+      if (e?.name === "AbortError" || !import.meta.env.PROD) throw e;
+      _tmdbRoute = "relay"; // direct is blocked here: use the relay from now on
+    }
+  }
+  try {
+    const res = await fetch(`${TMDB_RELAY}${pathAndQuery}`, init);
+    // The relay answers JSON; anything else (e.g. an old deploy serving the
+    // app page) or a relay failure means: go direct
+    const ct = res.headers.get("content-type") || "";
+    if (res.status < 500 && ct.includes("json")) return res;
+  } catch (e) {
+    if (e?.name === "AbortError") throw e;
+  }
+  _tmdbRoute = "direct";
+  return direct();
+}
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
 // ── TMDB metadata language ────────────────────────────────────────────────────
@@ -84,9 +117,7 @@ export const tmdbFetch = async (path, apiKey, opts = {}) => {
 
   let res;
   try {
-    res = await fetch(`${TMDB_BASE}${localizedPath}`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
+    res = await tmdbRequest(localizedPath, apiKey);
   } catch {
     _releaseSlot();
     _onUnreachable?.();
