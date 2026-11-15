@@ -1,0 +1,313 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Watching on phones (portrait + landscape)
+   - body.vc-watching is set while a title plays on its own page (App.jsx)
+   - portrait: no top bar / tab bar, full-width player stuck to the top while
+     the info and episodes scroll underneath, compact watch panel below it
+   - landscape: the player covers the whole screen (CSS, so it also works on
+     iPhone, where Safari can't put an embedded player full screen)
+   Wide screens keep the regular theater layout (focus.css).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.vc-watchbar,
+.vc-watch-back {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    /* ── Chrome out of the way ── */
+    body.vc-watching .vc-nav,
+    body.vc-watching .vc-tabs {
+        display: none !important;
+    }
+    body.vc-watching .main {
+        padding-top: 0 !important;
+        padding-bottom: calc(28px + env(safe-area-inset-bottom)) !important;
+    }
+
+    /* Small floating back button over the player */
+    body.vc-watching .vc-watch-back {
+        position: fixed;
+        top: calc(env(safe-area-inset-top) + 8px);
+        left: 8px;
+        z-index: 60;
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        cursor: pointer;
+    }
+
+    /* ── Player: full width, stuck to the top ── */
+    .vc-title.is-playing > .section:has(.player-wrap) {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        margin: 0 !important;
+        padding: env(safe-area-inset-top) 0 0 !important;
+        background: #000;
+    }
+    /* the episode label row above the player moves into the watch panel */
+    .vc-title.is-playing > .section:has(.player-wrap) > div:first-child:not(.player-wrap) {
+        display: none !important;
+    }
+    .vc-title.is-playing .player-wrap {
+        margin: 0 !important;
+        max-width: none !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+    /* source / ad-shield buttons live in the watch panel on phones */
+    .vc-title.is-playing .player-wrap .player-overlay-group,
+    .vc-title.is-playing .player-wrap .player-no-progress-hint {
+        display: none !important;
+    }
+    /* the big detail card gives way to the compact panel */
+    .vc-title.is-playing .detail-hero {
+        display: none !important;
+    }
+
+    /* ── Watch panel ── */
+    .vc-title.is-playing .vc-watchbar {
+        display: block;
+        order: -1;
+        padding: 14px 16px 6px;
+    }
+    .vc-watchbar__title {
+        margin: 0;
+        font-size: 21px;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+        color: var(--text);
+    }
+    .vc-watchbar__line {
+        margin: 4px 0 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        opacity: 0.85;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .vc-watchbar__meta {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: var(--text2);
+    }
+    .vc-watchbar__next {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        height: 46px;
+        margin-top: 14px;
+        border: 0;
+        border-radius: 8px;
+        background: #fff;
+        color: #000;
+        font: inherit;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    :root[data-theme="halo-light"] .vc-watchbar__next {
+        background: var(--text);
+        color: #fff;
+    }
+    .vc-watchbar__actions {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        margin: 12px -6px 0;
+    }
+    .vc-watchbar__act {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        padding: 8px 4px;
+        border: 0;
+        border-radius: 10px;
+        background: none;
+        color: var(--text);
+        font: inherit;
+        font-size: 11.5px;
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .vc-watchbar__act span {
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: 0.8;
+    }
+    .vc-watchbar__act:active {
+        background: rgba(255, 255, 255, 0.06);
+    }
+    .vc-watchbar__act.on {
+        color: var(--signal);
+    }
+    .vc-watchbar__act.on span {
+        opacity: 1;
+    }
+    .vc-watchbar__overview {
+        position: relative;
+        margin: 10px 0 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text2);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .vc-watchbar__overview.is-open {
+        display: block;
+    }
+    .vc-watchbar__more {
+        margin-left: 6px;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--text);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .vc-watchbar__overview:not(.is-open) .vc-watchbar__more {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        padding-left: 28px;
+        background: linear-gradient(to right, transparent, var(--bg) 26px);
+    }
+
+    /* Source picker: bottom sheet */
+    .vc-watchsheet {
+        position: fixed;
+        inset: 0;
+        z-index: 450;
+        display: flex;
+        align-items: flex-end;
+        background: rgba(0, 0, 0, 0.55);
+        animation: nx-fade 0.2s ease;
+    }
+    .vc-watchsheet__panel {
+        width: 100%;
+        padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+        border-radius: 18px 18px 0 0;
+        background: #1c1c20;
+        color: #fff;
+        animation: vc-sheet-up 0.28s var(--ease);
+    }
+    :root[data-theme="halo-light"] .vc-watchsheet__panel {
+        background: #fbfbf8;
+        color: var(--text);
+    }
+    @keyframes vc-sheet-up {
+        from {
+            transform: translateY(100%);
+        }
+    }
+    .vc-watchsheet__grab {
+        width: 38px;
+        height: 4px;
+        margin: 0 auto 12px;
+        border-radius: 2px;
+        background: currentColor;
+        opacity: 0.25;
+    }
+    .vc-watchsheet__panel h2 {
+        margin: 0 0 8px;
+        font-size: 17px;
+        font-weight: 800;
+    }
+    .vc-watchsheet__item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        height: 50px;
+        padding: 0 4px;
+        border: 0;
+        border-bottom: 1px solid rgba(127, 127, 127, 0.18);
+        background: none;
+        color: inherit;
+        font: inherit;
+        font-size: 16px;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+    }
+    .vc-watchsheet__item.on {
+        color: var(--signal);
+    }
+    .vc-watchsheet__hint {
+        margin: 12px 4px 0;
+        font-size: 13px;
+        opacity: 0.6;
+    }
+
+    /* ── Episodes: a lighter list under the player ── */
+    .vc-title.is-playing .section-title {
+        font-size: 19px;
+        margin-bottom: 10px;
+    }
+    .vc-title.is-playing .episode-card {
+        gap: 12px;
+        padding: 8px;
+        border-radius: 14px;
+    }
+    .vc-title.is-playing .episode-card .episode-thumb {
+        flex: 0 0 124px;
+        width: 124px !important;
+        min-width: 0;
+        border-radius: 8px;
+    }
+}
+
+/* ── Landscape on a phone: the player takes the whole screen ── */
+@media (orientation: landscape) and (max-height: 520px) {
+    body.vc-watching .vc-nav,
+    body.vc-watching .vc-tabs,
+    body.vc-watching .vc-watch-back {
+        display: none !important;
+    }
+    .vc-title.is-playing > .section:has(.player-wrap) {
+        position: static;
+    }
+    .vc-title.is-playing .player-wrap {
+        position: fixed !important;
+        inset: 0;
+        z-index: 500;
+        max-width: none !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: #000;
+    }
+    .vc-title.is-playing .player-wrap::before {
+        display: none;
+    }
+    .vc-title.is-playing .player-wrap .player-overlay-group,
+    .vc-title.is-playing .player-wrap .player-no-progress-hint {
+        display: none !important;
+    }
+    body.vc-watching .main {
+        overflow: hidden;
+    }
+}

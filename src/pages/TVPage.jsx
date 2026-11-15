@@ -74,6 +74,7 @@ import {
 } from "../utils/playerGamepadScript";
 import { setPlayerGamepadActive } from "../utils/gamepadPlayerState";
 import PlayerFrame from "../components/PlayerFrame";
+import WatchBar from "../components/WatchBar";
 import { useT } from "../utils/i18n";
 
 // ── Partial-circle progress icon (cached per pct tier) ───────────────────────
@@ -2425,6 +2426,43 @@ export default function TVPage({
               )}
             </div>
           )}
+
+          {/* Phones: what's playing, next episode, actions, source */}
+          {playing && selectedEp && (() => {
+            const nextEp = currentSeasonEpisodes.find(
+              (e) => e.episode_number === selectedEp.episode_number + 1,
+            );
+            const year = (d.first_air_date || "").slice(0, 4);
+            return (
+              <WatchBar
+                title={d.name || d.title}
+                line={[
+                  t("watch.season", { n: selectedSeason }),
+                  t("watch.episode", { n: selectedEp.episode_number }),
+                  selectedEp.name,
+                ].filter(Boolean).join(" · ")}
+                meta={[
+                  d.vote_average > 0 ? `★ ${d.vote_average.toFixed(1)}` : null,
+                  year || null,
+                  selectedEp.runtime ? t("watch.minutes", { n: selectedEp.runtime }) : null,
+                ].filter(Boolean).join(" · ")}
+                overview={selectedEp.overview || d.overview}
+                nextLabel={nextEp ? t("watch.episode", { n: nextEp.episode_number }) : null}
+                onNext={nextEp ? () => playEpisode(nextEp) : null}
+                saved={isSaved}
+                onSave={onSave}
+                onShare={onShare ? () => onShare({ ...d, media_type: "tv" }) : null}
+                watched={currentEpWatched}
+                onToggleWatched={() =>
+                  currentEpWatched
+                    ? onMarkUnwatched?.(currentProgressKey)
+                    : onMarkWatched?.(currentProgressKey)
+                }
+                sourceId={playerSource}
+                onSource={selectSource}
+              />
+            );
+          })()}
 
           <div className="section">
             <div className="section-title">{t("detail.episodes")}</div>

@@ -12,6 +12,7 @@ import "./styles/filters.css";
 import "./styles/focus.css";
 import "./styles/nx.css";
 import "./styles/features.css";
+import "./styles/watch.css";
 
 // Behave like an installed app on phones: no pinch / double-tap / input zoom
 preventZoom();

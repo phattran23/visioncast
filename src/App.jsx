@@ -787,6 +787,14 @@ export default function App() {
     };
   }, []);
 
+  // A title is playing on its own page: phones switch to the watching layout
+  // (no top bar / tab bar, sticky full-width player — see watch.css)
+  const watchingNow = !!currentTitleKey && currentTitleKey === playingKey;
+  useEffect(() => {
+    document.body.classList.toggle("vc-watching", watchingNow);
+    return () => document.body.classList.remove("vc-watching");
+  }, [watchingNow]);
+
   // Hide the dock while a video is full screen
   useEffect(() => {
     const onFs = () =>
@@ -1256,6 +1264,18 @@ export default function App() {
               : ""
           }`}
         >
+          {watchingNow && (
+            <button
+              className="vc-watch-back"
+              onClick={() => {
+                setShowSearch(false);
+                navigateBack();
+              }}
+              aria-label={uiLang === "vi" ? "Quay lại" : "Back"}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+            </button>
+          )}
           <TopNav
             page={page}
             canBack={navStack.length > 0}

@@ -66,6 +66,7 @@ import {
 } from "../utils/playerGamepadScript";
 import { setPlayerGamepadActive } from "../utils/gamepadPlayerState";
 import PlayerFrame from "../components/PlayerFrame";
+import WatchBar from "../components/WatchBar";
 import { useT } from "../utils/i18n";
 
 export default function MoviePage({
@@ -1226,6 +1227,28 @@ export default function MoviePage({
             ))}
           </div>
         </div>
+      )}
+
+      {/* Phones: what's playing, actions, source */}
+      {playing && !restricted && !isUnreleased && (
+        <WatchBar
+          title={d.title || d.name}
+          meta={[
+            d.vote_average > 0 ? `★ ${d.vote_average.toFixed(1)}` : null,
+            (d.release_date || "").slice(0, 4) || null,
+            d.runtime ? t("watch.minutes", { n: d.runtime }) : null,
+          ].filter(Boolean).join(" · ")}
+          overview={d.overview}
+          saved={isSaved}
+          onSave={onSave}
+          onShare={onShare ? () => onShare({ ...d, media_type: "movie" }) : null}
+          watched={isWatched}
+          onToggleWatched={() =>
+            isWatched ? onMarkUnwatched?.(progressKey) : onMarkWatched?.(progressKey)
+          }
+          sourceId={playerSource}
+          onSource={selectSource}
+        />
       )}
 
       {collection && onSelect && (
