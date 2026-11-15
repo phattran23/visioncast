@@ -160,20 +160,7 @@ export const tmdbFetch = async (path, apiKey, opts = {}) => {
 // Web build: VidSrc first, with fallbacks for when a source won't play.
 // supportsProgress: true = executeJavaScript tracking works for this source
 export const PLAYER_SOURCES = [
-  // vidsrc.pm: VidSrc mirror that also plays when the browser blocks the ad
-  // pop-up (iPhone Safari's default), so it goes first
-  {
-    id: "vidsrc",
-    label: "VidSrc",
-    tag: null,
-    note: null,
-    supportsProgress: true,
-    colorParam: null,
-    langParam: "ds_lang",
-    params: {},
-    movieUrl: (id) => `https://vidsrc.pm/embed/movie/${id}`,
-    tvUrl: (id, season, ep) => `https://vidsrc.pm/embed/tv/${id}/${season}/${ep}`,
-  },
+  // VidSrc 2 (vsembed.su) goes first: the default source
   {
     id: "vidsrc2",
     label: "VidSrc 2",
@@ -185,6 +172,20 @@ export const PLAYER_SOURCES = [
     params: {},
     movieUrl: (id) => `https://vsembed.su/embed/movie/${id}`,
     tvUrl: (id, season, ep) => `https://vsembed.su/embed/tv/${id}/${season}/${ep}`,
+  },
+  // vidsrc.pm: VidSrc mirror that also plays when the browser blocks the ad
+  // pop-up (iPhone Safari's default); first fallback
+  {
+    id: "vidsrc",
+    label: "VidSrc",
+    tag: null,
+    note: null,
+    supportsProgress: true,
+    colorParam: null,
+    langParam: "ds_lang",
+    params: {},
+    movieUrl: (id) => `https://vidsrc.pm/embed/movie/${id}`,
+    tvUrl: (id, season, ep) => `https://vidsrc.pm/embed/tv/${id}/${season}/${ep}`,
   },
   {
     id: "vidlink",
@@ -488,8 +489,8 @@ export const isAnimeContent = (item, details) => {
 };
 
 // Default sources
-export const ANIME_DEFAULT_SOURCE = "vidsrc";
-export const NON_ANIME_DEFAULT_SOURCE = "vidsrc";
+export const ANIME_DEFAULT_SOURCE = "vidsrc2";
+export const NON_ANIME_DEFAULT_SOURCE = "vidsrc2";
 
 // ── Episode Group fetch (localStorage + in-memory cache, 7-day TTL) ─────────
 // Episode groups almost never change -> cache aggressively across sessions.
