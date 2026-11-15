@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { tmdbFetch, imgUrl } from "../utils/api";
+import { tmdbFetch, imgUrl, posterSrcSet, backdropSrcSet } from "../utils/api";
 import { storage } from "../utils/storage";
 import { useT, useLang } from "../utils/i18n";
 import { recordSearchPick, isDisliked } from "../utils/taste";
@@ -338,7 +338,7 @@ export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
                   <div className="vc-search__list">
                     {trending.map((r) => (
                       <button key={`${r.media_type}_${r.id}`} className="vc-search__row" onClick={() => open(r)}>
-                        <img src={imgUrl(r.backdrop_path, "w300")} alt="" loading="lazy" />
+                        <img src={imgUrl(r.backdrop_path, "w780")} alt="" loading="lazy" />
                         <span className="vc-search__rowtext">
                           <b>{r.title || r.name}</b>
                           <span>{[typeLabel(r), year(r)].filter(Boolean).join(" · ")}</span>
@@ -381,7 +381,12 @@ export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
               {top && (
                 <button className={`vc-search__top${active === 0 ? " is-active" : ""}`} data-sr={0} onClick={() => open(top)}>
                   <span className="vc-search__topart">
-                    <img src={imgUrl(top.backdrop_path || top.poster_path, "w780")} alt="" />
+                    <img
+                      src={imgUrl(top.backdrop_path || top.poster_path, "w1280")}
+                      srcSet={top.backdrop_path ? backdropSrcSet(top.backdrop_path) : posterSrcSet(top.poster_path)}
+                      sizes="(max-width: 760px) 100vw, 320px"
+                      alt=""
+                    />
                     <span className="vc-search__topshade" aria-hidden="true" />
                     <span className="vc-search__toptag">{t("search.topResult")}</span>
                     <span className="vc-search__toptitle">{top.title || top.name}</span>
@@ -399,7 +404,7 @@ export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
                   <div className="vc-search__people">
                     {res.people.map((p) => (
                       <button key={p.id} className="vc-search__person" onClick={() => pickPerson(p)}>
-                        <img src={imgUrl(p.profile_path, "w185")} alt="" loading="lazy" />
+                        <img src={imgUrl(p.profile_path, "h632")} alt="" loading="lazy" />
                         <span>{p.name}</span>
                       </button>
                     ))}
@@ -422,7 +427,13 @@ export default function SearchModal({ apiKey, onSelect, onClose, offline }) {
                           title={r.title || r.name}
                         >
                           {r.poster_path ? (
-                            <img src={imgUrl(r.poster_path, "w342")} alt={r.title || r.name} loading="lazy" />
+                            <img
+                              src={imgUrl(r.poster_path, "w500")}
+                              srcSet={posterSrcSet(r.poster_path)}
+                              sizes="(max-width: 760px) 31vw, 140px"
+                              alt={r.title || r.name}
+                              loading="lazy"
+                            />
                           ) : (
                             <span className="vc-search__noart">{r.title || r.name}</span>
                           )}

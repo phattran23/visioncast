@@ -56,6 +56,19 @@ function withLanguage(path) {
 export const imgUrl = (path, size = "w500") =>
   path ? `${IMG_BASE}/${size}${path}` : null;
 
+// Responsive sources: the browser picks the sharpest file it needs for the
+// shown size and the screen's pixel density (3x phones get 500-780px posters)
+export const posterSrcSet = (path) =>
+  path
+    ? [["w342", 342], ["w500", 500], ["w780", 780]].map(([s, w]) => `${IMG_BASE}/${s}${path} ${w}w`).join(", ")
+    : undefined;
+export const backdropSrcSet = (path) =>
+  path
+    ? [["w780", 780], ["w1280", 1280], ["original", 1920]].map(([s, w]) => `${IMG_BASE}/${s}${path} ${w}w`).join(", ")
+    : undefined;
+export const stillSrcSet = (path) =>
+  path ? `${IMG_BASE}/w300${path} 300w, ${IMG_BASE}/original${path} 1280w` : undefined;
+
 // Global auth-error callback, registered by App on mount
 let _onAuthError = null;
 let _onUnreachable = null;

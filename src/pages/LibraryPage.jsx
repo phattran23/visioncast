@@ -145,7 +145,7 @@ export default function LibraryPage({
                 >
                   <div className="history-thumb">
                     {item.poster_path && (
-                      <img src={imgUrl(item.poster_path, "w92")} alt="" />
+                      <img src={imgUrl(item.poster_path, "w185")} alt="" />
                     )}
                   </div>
                   <div style={{ flex: 1 }}>

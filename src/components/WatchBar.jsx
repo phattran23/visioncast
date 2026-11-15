@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { PLAYER_SOURCES, tmdbFetch, imgUrl } from "../utils/api";
+import { PLAYER_SOURCES, tmdbFetch, imgUrl, posterSrcSet } from "../utils/api";
 import { useT } from "../utils/i18n";
 import { storage } from "../utils/storage";
 import { buildAffinity, matchScore, isDisliked } from "../utils/taste";
@@ -242,7 +242,7 @@ export default function WatchBar({
           ) : (
             extra.similar.map((s) => (
               <button key={s.id} className="vc-wb__poster" onClick={() => openPreview(s)} aria-label={s.title || s.name}>
-                <img src={imgUrl(s.poster_path, "w342")} alt="" loading="lazy" />
+                <img src={imgUrl(s.poster_path, "w500")} srcSet={posterSrcSet(s.poster_path)} sizes="31vw" alt="" loading="lazy" />
               </button>
             ))
           )}

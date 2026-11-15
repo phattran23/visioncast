@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { imgUrl } from "../utils/api";
+import { imgUrl, posterSrcSet, backdropSrcSet } from "../utils/api";
 import { PlayIcon, ChevronLeftIcon, ChevronRightIcon, FilmIcon, VisionCastMark } from "./Icons";
 import { useT } from "../utils/i18n";
 
@@ -88,7 +88,13 @@ export function NxHero({ items, onSelect, onPlay, isSaved, onToggleSave, ratingF
       >
         {slides.map((s, n) => (
           <picture key={`${s.media_type}_${s.id}`} className={`nx-hero__art${n === active ? " is-active" : ""}`} aria-hidden="true">
-            {s.poster_path && <source media="(max-width: 700px)" srcSet={imgUrl(s.poster_path, "w780")} />}
+            {s.poster_path && (
+              <source
+                media="(max-width: 700px)"
+                srcSet={`${imgUrl(s.poster_path, "w500")} 500w, ${imgUrl(s.poster_path, "w780")} 780w, ${imgUrl(s.poster_path, "original")} 2000w`}
+                sizes="88vw"
+              />
+            )}
             <img src={imgUrl(s.backdrop_path || s.poster_path, "original")} alt="" loading={n === 0 ? "eager" : "lazy"} />
           </picture>
         ))}
@@ -221,8 +227,14 @@ export function NxCard({ item, onClick, cert, restricted, progress = 0, meta, wi
       <span className="nx-card__frame">
         {land || poster ? (
           <picture>
-            {!wide && poster && <source media="(max-width: 700px)" srcSet={imgUrl(poster, "w342")} />}
-            <img src={imgUrl(land || poster, "w780")} alt="" loading="lazy" />
+            {!wide && poster && <source media="(max-width: 700px)" srcSet={posterSrcSet(poster)} sizes="31vw" />}
+            <img
+              src={imgUrl(land || poster, "w780")}
+              srcSet={land ? backdropSrcSet(land) : posterSrcSet(poster)}
+              sizes={wide ? "(max-width: 700px) 60vw, 26vw" : "(max-width: 1100px) 25vw, 17vw"}
+              alt=""
+              loading="lazy"
+            />
           </picture>
         ) : (
           <span className="nx-card__empty"><FilmIcon /></span>
@@ -256,7 +268,11 @@ export function NxTopCard({ item, rank, onClick }) {
     <button className="nx-top" onClick={onClick} title={title} aria-label={`${rank}. ${title}`}>
       <span className="nx-top__num" aria-hidden="true">{rank}</span>
       <span className="nx-top__poster">
-        {item.poster_path ? <img src={imgUrl(item.poster_path, "w342")} alt="" loading="lazy" /> : <FilmIcon />}
+        {item.poster_path ? (
+          <img src={imgUrl(item.poster_path, "w500")} srcSet={posterSrcSet(item.poster_path)} sizes="(max-width: 700px) 30vw, 13vw" alt="" loading="lazy" />
+        ) : (
+          <FilmIcon />
+        )}
       </span>
     </button>
   );

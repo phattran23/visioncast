@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
-import { imgUrl, isAnimeContent } from "../utils/api";
+import { imgUrl, isAnimeContent, posterSrcSet } from "../utils/api";
 import { useT } from "../utils/i18n";
 import {
   PlayIcon,
@@ -91,7 +91,9 @@ const MediaCard = memo(function MediaCard({
         <div className="card-poster">
           {item.poster_path ? (
             <img
-              src={imgUrl(item.poster_path, "w342")}
+              src={imgUrl(item.poster_path, "w500")}
+              srcSet={posterSrcSet(item.poster_path)}
+              sizes="(max-width: 700px) 34vw, 220px"
               alt={title}
               loading="lazy"
             />

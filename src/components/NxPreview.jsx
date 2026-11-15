@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { imgUrl, tmdbFetch } from "../utils/api";
+import { imgUrl, tmdbFetch, backdropSrcSet } from "../utils/api";
 import { PlayIcon } from "./Icons";
 import { useT, useLang } from "../utils/i18n";
 import { getRating, rateTitle, matchScore, isDisliked } from "../utils/taste";
@@ -291,7 +291,12 @@ export default function NxPreview({
 
         <div className="nx-preview__media">
           {full.backdrop_path || full.poster_path ? (
-            <img src={imgUrl(full.backdrop_path || full.poster_path, "w1280")} alt="" />
+            <img
+              src={imgUrl(full.backdrop_path || full.poster_path, "w1280")}
+              srcSet={full.backdrop_path ? backdropSrcSet(full.backdrop_path) : undefined}
+              sizes="(max-width: 700px) 100vw, 880px"
+              alt=""
+            />
           ) : null}
           {ytSrc && (
             <iframe
@@ -408,14 +413,13 @@ export default function NxPreview({
                 return (
                   <button key={s.id} className="nx-sim" onClick={() => onPreview(s)}>
                     <span className="nx-sim__art">
-                      <img src={imgUrl(s.backdrop_path, "w500")} alt="" loading="lazy" />
+                      <img src={imgUrl(s.backdrop_path, "w780")} srcSet={backdropSrcSet(s.backdrop_path)} sizes="(max-width: 700px) 46vw, 280px" alt="" loading="lazy" />
                       <span className="nx-sim__name">{s.title || s.name}</span>
                     </span>
                     <span className="nx-sim__facts">
                       {m && <b className="nx-match">{t("preview.match", { n: m.score })}</b>}
                       <span>{(s.release_date || s.first_air_date || "").slice(0, 4)}</span>
                     </span>
-                    {s.overview && <span className="nx-sim__text">{s.overview}</span>}
                   </button>
                 );
               })}

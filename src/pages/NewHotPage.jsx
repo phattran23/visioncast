@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { imgUrl, tmdbFetch } from "../utils/api";
+import { imgUrl, tmdbFetch, backdropSrcSet } from "../utils/api";
 import { PlayIcon } from "../components/Icons";
 import { useT, useLang } from "../utils/i18n";
 import { hasReminder, toggleReminder, REMINDERS_EVENT } from "../utils/reminders";
@@ -109,7 +109,13 @@ export default function NewHotPage({ apiKey, aff, onPreview, onPlay }) {
         </div>
         <div className="nh-item__body">
           <button className="nh-item__art" onClick={() => onPreview(i)} aria-label={title}>
-            <img src={imgUrl(i.backdrop_path || i.poster_path, "w780")} alt="" loading="lazy" />
+            <img
+              src={imgUrl(i.backdrop_path || i.poster_path, "w1280")}
+              srcSet={i.backdrop_path ? backdropSrcSet(i.backdrop_path) : undefined}
+              sizes="(max-width: 700px) 85vw, 900px"
+              alt=""
+              loading="lazy"
+            />
             <span className="nh-item__shade" aria-hidden="true" />
             <span className="nh-item__name">{title}</span>
           </button>

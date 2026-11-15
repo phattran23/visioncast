@@ -30,6 +30,7 @@ import {
   NON_ANIME_DEFAULT_SOURCE,
   NEEDS_INTERCEPT,
   getNextNonAsyncSource,
+  stillSrcSet,
 } from "../utils/api";
 import {
   BookmarkIcon,
@@ -1741,7 +1742,7 @@ export default function TVPage({
             <div
               className="detail-bg"
               style={{
-                backgroundImage: `url(${imgUrl(d.backdrop_path, "w1280")})`,
+                backgroundImage: `url(${imgUrl(d.backdrop_path, "original")})`,
               }}
             />
             <div className="detail-gradient" />
@@ -2051,6 +2052,8 @@ export default function TVPage({
                         {nextEp?.still_path ? (
                           <img
                             src={imgUrl(nextEp.still_path, "w300")}
+                            srcSet={stillSrcSet(nextEp.still_path)}
+                            sizes="200px"
                             alt={nextEp?.name}
                             style={{
                               width: "100%",
@@ -2669,6 +2672,8 @@ const EpisodeCard = memo(function EpisodeCard({
         {ep.still_path ? (
           <img
             src={imgUrl(ep.still_path, "w300")}
+            srcSet={stillSrcSet(ep.still_path)}
+            sizes="140px"
             alt={ep.name}
             loading="lazy"
           />

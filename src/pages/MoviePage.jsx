@@ -799,7 +799,7 @@ export default function MoviePage({
         <div
           className="detail-bg"
           style={{
-            backgroundImage: `url(${imgUrl(d.backdrop_path, "w1280")})`,
+            backgroundImage: `url(${imgUrl(d.backdrop_path, "original")})`,
           }}
         />
         <div className="detail-gradient" />
