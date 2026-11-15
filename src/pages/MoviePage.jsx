@@ -1229,16 +1229,17 @@ export default function MoviePage({
         </div>
       )}
 
-      {/* Phones: what's playing, actions, source */}
+      {/* Phones: what's playing, actions, more like this */}
       {playing && !restricted && !isUnreleased && (
         <WatchBar
-          title={d.title || d.name}
-          meta={[
-            d.vote_average > 0 ? `★ ${d.vote_average.toFixed(1)}` : null,
-            (d.release_date || "").slice(0, 4) || null,
-            d.runtime ? t("watch.minutes", { n: d.runtime }) : null,
-          ].filter(Boolean).join(" · ")}
+          apiKey={apiKey}
+          type="movie"
+          item={d}
+          line={d.runtime ? t("watch.minutes", { n: d.runtime }) : null}
+          year={(d.release_date || "").slice(0, 4)}
+          cert={rating.cert}
           overview={d.overview}
+          progressPct={progress[progressKey] || 0}
           saved={isSaved}
           onSave={onSave}
           onShare={onShare ? () => onShare({ ...d, media_type: "movie" }) : null}

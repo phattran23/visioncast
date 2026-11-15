@@ -2427,27 +2427,27 @@ export default function TVPage({
             </div>
           )}
 
-          {/* Phones: what's playing, next episode, actions, source */}
+          {/* Phones: what's playing, next episode, actions, tabs */}
           {playing && selectedEp && (() => {
             const nextEp = currentSeasonEpisodes.find(
               (e) => e.episode_number === selectedEp.episode_number + 1,
             );
-            const year = (d.first_air_date || "").slice(0, 4);
             return (
               <WatchBar
-                title={d.name || d.title}
+                apiKey={apiKey}
+                type="tv"
+                item={d}
                 line={[
-                  t("watch.season", { n: selectedSeason }),
-                  t("watch.episode", { n: selectedEp.episode_number }),
+                  t("watch.code", { s: selectedSeason, e: selectedEp.episode_number }),
                   selectedEp.name,
-                ].filter(Boolean).join(" · ")}
-                meta={[
-                  d.vote_average > 0 ? `★ ${d.vote_average.toFixed(1)}` : null,
-                  year || null,
                   selectedEp.runtime ? t("watch.minutes", { n: selectedEp.runtime }) : null,
                 ].filter(Boolean).join(" · ")}
+                year={(d.first_air_date || "").slice(0, 4)}
+                cert={rating.cert}
+                seasons={d.number_of_seasons}
                 overview={selectedEp.overview || d.overview}
-                nextLabel={nextEp ? t("watch.episode", { n: nextEp.episode_number }) : null}
+                progressPct={progress[currentProgressKey] || 0}
+                nextLabel={nextEp ? t("watch.code", { s: selectedSeason, e: nextEp.episode_number }) : null}
                 onNext={nextEp ? () => playEpisode(nextEp) : null}
                 saved={isSaved}
                 onSave={onSave}
@@ -2464,7 +2464,7 @@ export default function TVPage({
             );
           })()}
 
-          <div className="section">
+          <div className="section vc-episodes">
             <div className="section-title">{t("detail.episodes")}</div>
             {seasons.length > 0 && (
               <div className="season-selector">

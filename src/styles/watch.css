@@ -53,8 +53,9 @@
         padding: env(safe-area-inset-top) 0 0 !important;
         background: #000;
     }
-    /* the episode label row above the player moves into the watch panel */
-    .vc-title.is-playing > .section:has(.player-wrap) > div:first-child:not(.player-wrap) {
+    /* only the player stays in the sticky block: the episode label row and
+       the old progress row move into the watch panel */
+    .vc-title.is-playing > .section:has(.player-wrap) > *:not(.player-wrap) {
         display: none !important;
     }
     .vc-title.is-playing .player-wrap {
@@ -309,5 +310,337 @@
     }
     body.vc-watching .main {
         overflow: hidden;
+    }
+}
+
+/* ══ Streaming-style watch panel (WatchBar v2) ═════════════════════════════ */
+@media (max-width: 760px) {
+    .vc-title.is-playing .vc-watchbar {
+        padding: 0;
+    }
+    .vc-wb__progress {
+        height: 3px;
+        background: rgba(255, 255, 255, 0.18);
+    }
+    .vc-wb__progress span {
+        display: block;
+        height: 100%;
+        background: var(--signal);
+    }
+    .vc-wb__hint {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 9px 12px;
+        border: 0;
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--text);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        animation: nx-fade 0.3s ease;
+    }
+    .vc-wb__body {
+        padding: 14px 16px 4px;
+    }
+    .vc-wb__title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.015em;
+        color: var(--text);
+    }
+    .vc-wb__facts {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+        margin: 8px 0 0;
+        font-size: 14px;
+        color: var(--text2);
+    }
+    .vc-wb__cert {
+        padding: 0 5px;
+        border: 1px solid currentColor;
+        border-radius: 3px;
+        font-size: 12px;
+        line-height: 18px;
+    }
+    .vc-wb__hd {
+        padding: 0 5px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.16);
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 18px;
+    }
+    :root[data-theme="halo-light"] .vc-wb__hd {
+        background: rgba(0, 0, 0, 0.08);
+    }
+    .vc-wb__line {
+        margin: 10px 0 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .vc-wb__primary {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        height: 44px;
+        margin-top: 12px;
+        border: 0;
+        border-radius: 5px;
+        background: #fff;
+        color: #000;
+        font: inherit;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    :root[data-theme="halo-light"] .vc-wb__primary {
+        background: var(--text);
+        color: #fff;
+    }
+    .vc-wb__overview {
+        margin: 12px 0 0;
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--text);
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .vc-wb__overview.is-open {
+        display: block;
+    }
+    .vc-wb__moretext {
+        margin-top: 2px;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--text2);
+        font: inherit;
+        font-size: 13.5px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .vc-wb__cast {
+        margin: 8px 0 0;
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--text2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .vc-wb__cast span {
+        opacity: 0.75;
+    }
+    .vc-wb__actions {
+        display: flex;
+        justify-content: space-around;
+        margin: 16px -8px 0;
+    }
+    .vc-wb__act {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        min-width: 72px;
+        padding: 6px 4px;
+        border: 0;
+        background: none;
+        color: var(--text);
+        font: inherit;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .vc-wb__act span {
+        color: var(--text2);
+    }
+    .vc-wb__act.on,
+    .vc-wb__act.on span {
+        color: var(--text);
+    }
+    .vc-wb__act.on svg {
+        color: var(--signal);
+    }
+    .vc-wb__rate {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+        animation: nx-fade 0.2s ease;
+    }
+    :root[data-theme="halo-light"] .vc-wb__rate .nx-rate {
+        border-color: rgba(0, 0, 0, 0.2);
+        background: transparent;
+    }
+    :root[data-theme="halo-light"] .vc-wb__rate .nx-rate__btn {
+        color: var(--text);
+    }
+
+    /* Tabs with an accent bar on top of the selected one */
+    .vc-wb__tabs {
+        display: flex;
+        gap: 22px;
+        margin-top: 14px;
+        padding: 0 16px;
+        border-top: 1px solid rgba(127, 127, 127, 0.22);
+    }
+    .vc-wb__tab {
+        position: relative;
+        padding: 14px 0 10px;
+        border: 0;
+        background: none;
+        color: var(--text2);
+        font: inherit;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .vc-wb__tab.on {
+        color: var(--text);
+    }
+    .vc-wb__tab.on::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        border-radius: 0 0 2px 2px;
+        background: var(--signal);
+    }
+
+    /* More like this: 3-column poster grid */
+    .vc-wb__grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 6px 16px 16px;
+    }
+    .vc-wb__poster {
+        display: block;
+        aspect-ratio: 2 / 3;
+        padding: 0;
+        border: 0;
+        border-radius: 5px;
+        overflow: hidden;
+        background: #1b1b21;
+        cursor: pointer;
+    }
+    .vc-wb__poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .vc-wb__poster.is-loading {
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        background-size: 200% 100%;
+        animation: nx-shimmer 1.2s linear infinite;
+    }
+    .vc-wb__empty {
+        grid-column: 1 / -1;
+        padding: 24px 0;
+        text-align: center;
+        color: var(--text2);
+    }
+    .vc-watchsheet__value {
+        color: var(--text2);
+        font-weight: 500;
+    }
+
+    /* Episodes tab = the page's own list, restyled; hidden on the other tab */
+    .vc-title[data-watchtab="similar"] .vc-episodes {
+        display: none !important;
+    }
+    .vc-title.is-playing .vc-episodes {
+        padding-top: 4px !important;
+    }
+    .vc-title.is-playing .vc-episodes > .section-title {
+        display: none;
+    }
+    .vc-title.is-playing .season-selector {
+        margin-bottom: 8px;
+    }
+    .vc-title.is-playing .season-btn {
+        height: 34px;
+        padding: 0 14px;
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .vc-title.is-playing .episode-card {
+        display: grid;
+        grid-template-columns: 128px 1fr;
+        column-gap: 12px;
+        row-gap: 4px;
+        align-items: center;
+        padding: 10px 0 14px;
+        border: 0 !important;
+        border-radius: 0;
+        background: none !important;
+    }
+    .vc-title.is-playing .episode-card + .episode-card {
+        border-top: 1px solid rgba(127, 127, 127, 0.14) !important;
+    }
+    .vc-title.is-playing .episode-card .episode-thumb {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        width: 128px !important;
+        border-radius: 5px;
+    }
+    .vc-title.is-playing .episode-card .episode-info {
+        display: contents;
+    }
+    .vc-title.is-playing .episode-card .episode-num {
+        grid-column: 2;
+        align-self: end;
+        font-size: 12px;
+        opacity: 0.7;
+    }
+    .vc-title.is-playing .episode-card .episode-name {
+        grid-column: 2;
+        align-self: start;
+        font-size: 15px;
+        font-weight: 700;
+    }
+    .vc-title.is-playing .episode-card .episode-desc-wrap,
+    .vc-title.is-playing .episode-card .episode-progress-bar {
+        grid-column: 1 / -1;
+    }
+    .vc-title.is-playing .episode-card .episode-desc-wrap {
+        margin-top: 6px;
+        font-size: 13.5px;
+        color: var(--text2);
+    }
+    /* round play button on every thumbnail */
+    .vc-title.is-playing .episode-card .episode-thumb-play {
+        opacity: 1;
+        background: transparent;
+    }
+    .vc-title.is-playing .episode-card .episode-thumb-play svg {
+        width: 34px;
+        height: 34px;
+        padding: 9px;
+        border: 1.5px solid #fff;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.45);
+        color: #fff;
+    }
+    .vc-title.is-playing .episode-card.playing .episode-name {
+        color: var(--signal);
     }
 }

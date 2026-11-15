@@ -1168,6 +1168,13 @@ export default function App() {
     },
     [handleSelectResult],
   );
+  // Other parts of the app (e.g. the phone watch panel) ask for a preview
+  useEffect(() => {
+    const on = (e) => e.detail && openPreview(e.detail);
+    window.addEventListener("visioncast:preview", on);
+    return () => window.removeEventListener("visioncast:preview", on);
+  }, [openPreview]);
+
   // Reminders whose release day has come fire once when the app opens
   useEffect(() => {
     const id = setTimeout(() => setDueReminders(takeDueReminders()), 1500);
