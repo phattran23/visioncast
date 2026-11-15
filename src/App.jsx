@@ -1449,7 +1449,7 @@ export default function App() {
         {showSearch && (
           <SearchModal
             apiKey={apiKey}
-            onSelect={handleSelectResult}
+            onSelect={(item) => openPreview(item)}
             onClose={() => setShowSearch(false)}
             offline={offline}
           />
