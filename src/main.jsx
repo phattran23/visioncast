@@ -14,6 +14,7 @@ import "./styles/nx.css";
 import "./styles/features.css";
 import "./styles/watch.css";
 import "./styles/search.css";
+import "./styles/apple.css";
 
 // Behave like an installed app on phones: no pinch / double-tap / input zoom
 preventZoom();

@@ -1,0 +1,452 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Phone home screen, in the style of a big-title streaming app:
+   large page title + round avatar, full-bleed billboard with a title logo,
+   pill Play + round "+", big rounded "continue" cards with a glass dock,
+   Top 10 numbers inside the posters, rounded posters with a hairline edge,
+   release dates on upcoming titles, large featured cards.
+   Wide screens keep their layout (only the title logo is shared).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Shared bits that only phones show */
+.vc-nav__large,
+.nx-hero__chip,
+.nx-hero__genres,
+.nx-top__rank,
+.nx-top__genre,
+.nx-card__dock,
+.nx-upnext__more,
+.nx-feature {
+    display: none;
+}
+
+/* Title logo on the billboard (all sizes) */
+.nx-hero__logo {
+    display: block;
+    max-width: min(36vw, 520px);
+    max-height: 160px;
+    object-fit: contain;
+    object-position: left bottom;
+    filter: drop-shadow(0 2px 14px rgba(0, 0, 0, 0.45));
+}
+
+/* Upcoming titles: release date on the card (all sizes) */
+.nx-card__soon {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    padding: 26px 8px 9px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0));
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: center;
+}
+
+@media (max-width: 760px) {
+    /* ── 1. Large title + avatar ── */
+    .vc-nav.is-home .vc-nav__brand {
+        display: none;
+    }
+    .vc-nav.is-home .vc-nav__large {
+        display: block;
+        margin: 0;
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
+        transition: font-size 0.25s var(--ease);
+    }
+    .vc-nav.is-home.is-solid .vc-nav__large {
+        font-size: 20px;
+    }
+    .vc-nav__me {
+        width: 40px;
+        height: 40px;
+    }
+    .vc-nav__me.has-account {
+        background: linear-gradient(135deg, #ff9a5a 0%, #e0457b 55%, #8f4dff 100%);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+        font-size: 15px;
+        letter-spacing: 0.02em;
+    }
+}
+
+@media (max-width: 700px) {
+    /* ── 2. Full-bleed billboard ── */
+    .nx-hero {
+        margin-bottom: 6px;
+        padding: 0;
+        overflow: visible;
+    }
+    .nx-hero__tint {
+        display: none !important;
+    }
+    .nx-hero__stage {
+        width: 100%;
+        height: min(80svh, 680px);
+        min-height: 520px;
+        aspect-ratio: auto;
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    .nx-hero__art img {
+        object-position: center 18%;
+    }
+    .nx-hero__shade {
+        background:
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 20%),
+            linear-gradient(to top, var(--bg) 2%, rgba(0, 0, 0, 0.55) 34%, rgba(0, 0, 0, 0) 58%);
+    }
+    .nx-hero__info {
+        bottom: 46px;
+        padding: 0 22px;
+        gap: 10px;
+        align-items: center;
+        text-align: center;
+    }
+    .nx-hero__kicker,
+    .nx-hero__facts {
+        display: none;
+    }
+    .nx-hero__chip {
+        display: inline-flex;
+        align-items: center;
+        height: 28px;
+        padding: 0 11px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 9px;
+        background: rgba(0, 0, 0, 0.3);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        font-size: 13.5px;
+        font-weight: 600;
+    }
+    /* undo the "visually hidden" title of the earlier poster card */
+    .nx-hero__title {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+        margin: 2px 0;
+        font-size: 36px;
+        line-height: 1.05;
+        text-align: center;
+        display: block;
+        -webkit-line-clamp: unset;
+    }
+    .nx-hero__logo {
+        max-width: 78vw;
+        max-height: 112px;
+        margin: 0 auto;
+        object-position: center bottom;
+    }
+    .nx-hero__genres {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0;
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.88);
+        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+    }
+    .nx-hero__certbox {
+        padding: 0 5px;
+        border: 1px solid currentColor;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 17px;
+    }
+    .nx-hero__actions {
+        justify-content: center;
+        gap: 12px;
+        width: auto;
+        margin-top: 8px;
+    }
+    .nx-hero__actions .nx-btn--play {
+        flex: 0 0 auto;
+        width: min(60vw, 250px);
+        height: 50px;
+        border-radius: 999px;
+        font-size: 17px;
+        background: rgba(255, 255, 255, 0.95);
+    }
+    .nx-hero__actions .nx-btn--list {
+        flex: 0 0 auto;
+        width: 50px;
+        height: 50px;
+        padding: 0;
+        border-radius: 50%;
+        background: rgba(60, 60, 66, 0.72);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+    }
+    .nx-btn--list .nx-btn__label {
+        display: none;
+    }
+    .nx-hero__side {
+        display: flex;
+        position: absolute;
+        left: 50%;
+        right: auto;
+        bottom: 16px;
+        transform: translateX(-50%);
+    }
+    .nx-hero__cert {
+        display: none;
+    }
+    .nx-hero__dots {
+        gap: 7px;
+    }
+    .nx-hero__dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.45);
+    }
+    .nx-hero__dot.is-active {
+        width: 24px;
+        border-radius: 4px;
+        background: #fff;
+    }
+
+    /* ── 6. Rounded posters with a hairline edge ── */
+    .nx-card:not(.nx-card--wide) .nx-card__frame,
+    .nx-top__poster {
+        border-radius: 14px;
+    }
+    .nx-card__frame::before,
+    .nx-top__poster::before,
+    .nx-feature__card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        border-radius: inherit;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13);
+        pointer-events: none;
+    }
+    .nx-row__track {
+        --per: 2.55;
+    }
+
+    /* ── 4. Continue watching: big rounded cards with a glass dock ── */
+    .nx-row--wide .nx-row__track {
+        --per: 1.2;
+        gap: 12px;
+    }
+    .nx-card--wide .nx-card__frame {
+        aspect-ratio: 16 / 10;
+        border-radius: 16px;
+    }
+    .nx-card--wide .nx-card__meta,
+    .nx-card--wide .nx-card__bar {
+        display: none;
+    }
+    .nx-card--wide .nx-card__frame::after {
+        inset: 30% 0 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+    }
+    .nx-card--wide .nx-card__name {
+        display: -webkit-box;
+        bottom: 56px;
+        left: 14px;
+        right: 14px;
+        font-size: 19px;
+        font-weight: 800;
+    }
+    .nx-card--wide .nx-card__dock {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 40px;
+        padding: 0 46px 0 14px;
+        border-radius: 12px;
+        background: rgba(44, 44, 50, 0.55);
+        -webkit-backdrop-filter: blur(18px) saturate(1.4);
+        backdrop-filter: blur(18px) saturate(1.4);
+        color: #fff;
+        font-size: 13.5px;
+        font-weight: 600;
+    }
+    .nx-card__dockbar {
+        flex: 0 0 56px;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.32);
+        overflow: hidden;
+    }
+    .nx-card__dockbar span {
+        display: block;
+        height: 100%;
+        background: #fff;
+    }
+    .nx-card__docktext {
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: 0.92;
+    }
+    .nx-upnext__x {
+        display: none !important;
+    }
+    .nx-upnext__more {
+        position: absolute;
+        right: 14px;
+        bottom: 13px;
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: #fff;
+        cursor: pointer;
+    }
+
+    /* ── 5. Top 10: the number sits inside the poster ── */
+    .nx-row--top .nx-row__track {
+        --per: 2.45;
+        gap: 12px;
+    }
+    .nx-top__num {
+        display: none;
+    }
+    .nx-top {
+        display: block;
+    }
+    .nx-top__poster {
+        display: block;
+        width: 100%;
+        position: relative;
+    }
+    .nx-top__rank {
+        display: block;
+        position: absolute;
+        top: 6px;
+        left: 11px;
+        z-index: 2;
+        color: #fff;
+        font-size: 40px;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+    }
+    .nx-top__genre {
+        display: block;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+        padding: 28px 8px 11px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0));
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 14px;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    /* ── 7. Featured: large cards ── */
+    .nx-feature {
+        display: block;
+        position: relative;
+        z-index: 2;
+        margin: 0 0 30px;
+    }
+    .nx-feature__track {
+        display: flex;
+        gap: 12px;
+        padding: 4px var(--nx-x);
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-padding: 0 var(--nx-x);
+        scrollbar-width: none;
+    }
+    .nx-feature__track::-webkit-scrollbar {
+        display: none;
+    }
+    .nx-feature__card {
+        position: relative;
+        flex: 0 0 calc(100% - 26px);
+        aspect-ratio: 4 / 5;
+        padding: 0;
+        border: 0;
+        border-radius: 20px;
+        overflow: hidden;
+        background: #1b1b21;
+        color: #fff;
+        font: inherit;
+        text-align: left;
+        scroll-snap-align: start;
+        cursor: pointer;
+    }
+    .nx-feature__card > img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 20%;
+    }
+    .nx-feature__shade {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.35) 32%, rgba(0, 0, 0, 0) 55%);
+    }
+    .nx-feature__info {
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .nx-feature__title {
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1.05;
+    }
+    .nx-feature__logo {
+        display: block;
+        max-width: 72%;
+        max-height: 84px;
+        object-fit: contain;
+        object-position: left bottom;
+        filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45));
+    }
+    .nx-feature__meta {
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.85);
+    }
+    .nx-feature__line {
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    body.vc-scrolling .nx-feature__card {
+        pointer-events: none;
+    }
+}

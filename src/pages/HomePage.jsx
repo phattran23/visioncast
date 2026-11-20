@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import MediaCard from "../components/MediaCard";
-import { NxHero, NxRow, NxCard, NxTopCard } from "../components/NxBrowse";
+import { NxHero, NxRow, NxCard, NxTopCard, NxFeatureRow } from "../components/NxBrowse";
 import { tmdbFetch } from "../utils/api";
 import { useRatings, getRatingForItem } from "../utils/useRatings";
 import { isRestricted } from "../utils/ageRating";
@@ -256,8 +256,53 @@ export default function HomePage({
     );
   };
 
+  // Big featured cards: popular series and films not already in the billboard
+  const featuredItems = useMemo(() => {
+    const inHero = new Set(heroItems.map((i) => `${i.media_type}_${i.id}`));
+    const pool = [];
+    for (let i = 0; i < 10; i++) {
+      if (trendingTVItems[i]) pool.push(trendingTVItems[i]);
+      if (trendingMovieItems[i + 3]) pool.push(trendingMovieItems[i + 3]);
+    }
+    return pool
+      .filter((i) => (i.backdrop_path || i.poster_path) && !inHero.has(`${i.media_type}_${i.id}`))
+      .filter((i) => !itemRestricted(i) && !isDisliked(i))
+      .slice(0, 5);
+  }, [heroItems, trendingTVItems, trendingMovieItems, itemRestricted]);
+
+  // "1h 29m left" for films, "S1:E6" for series
+  const timeLeft = (item, pct) => {
+    if (item.media_type === "tv")
+      return item.season != null ? t("watch.code", { s: item.season, e: item.episode }) : null;
+    if (!item.runtime) return null;
+    const left = Math.max(1, Math.round(item.runtime * (1 - pct / 100)));
+    const h = Math.floor(left / 60);
+    const m = left % 60;
+    return lang === "vi" ? `Còn ${h ? `${h} giờ ` : ""}${m} phút` : `${h ? `${h}h ` : ""}${m}m left`;
+  };
+  const [upNextMenu, setUpNextMenu] = useState(null); // { item, pk }
+
   return (
     <div className="fade-in halo-home nx-home">
+      {upNextMenu && (
+        <div className="vc-watchsheet" role="dialog" aria-modal="true" onClick={() => setUpNextMenu(null)}>
+          <div className="vc-watchsheet__panel" onClick={(e) => e.stopPropagation()}>
+            <div className="vc-watchsheet__grab" aria-hidden="true" />
+            <h2>{upNextMenu.item.title || upNextMenu.item.name}</h2>
+            <button className="vc-watchsheet__item" onClick={() => { const i = upNextMenu.item; setUpNextMenu(null); (onPlay || onSelect)(i); }}>
+              <span>{t("media.continue")}</span>
+            </button>
+            <button className="vc-watchsheet__item" onClick={() => { const i = upNextMenu.item; setUpNextMenu(null); preview(i); }}>
+              <span>{t("new.info")}</span>
+            </button>
+            {onHideUpNext && (
+              <button className="vc-watchsheet__item" onClick={() => { onHideUpNext(upNextMenu.pk); setUpNextMenu(null); }}>
+                <span>{t("home.hideUpNext", { title: "" }).replace(/\s+/g, " ").trim()}</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {/* ── Offline ── */}
       {offline && (
         <div
@@ -298,6 +343,7 @@ export default function HomePage({
       {!loading && heroItems.length > 0 && (
         <NxHero
           items={heroItems}
+          apiKey={apiKey}
           onSelect={(s) =>
             preview(s, enrichedRatingsMap[`${s.media_type === "tv" ? "tv" : "movie"}_${s.id}`])
           }
@@ -330,6 +376,7 @@ export default function HomePage({
                     wide
                     item={item}
                     progress={progress[pk] || 0}
+                    left={timeLeft(item, progress[pk] || 0)}
                     meta={
                       item.media_type === "tv" && item.season != null
                         ? `S${item.season} · E${item.episode}`
@@ -337,6 +384,13 @@ export default function HomePage({
                     }
                     onClick={() => (onPlay ? onPlay(item) : onSelect(item))}
                   />
+                  <button
+                    className="nx-upnext__more"
+                    onClick={() => setUpNextMenu({ item, pk })}
+                    aria-label={t("watch.moreActions")}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
+                  </button>
                   {onHideUpNext && (
                     <button
                       className="nx-upnext__x"
@@ -372,16 +426,24 @@ export default function HomePage({
           if (viewMode === "list" || top.length < 5)
             return renderRow("trendingMovies", t("home.trendingMovies"), top);
           return (
-            <NxRow key="trendingMovies" title={t("home.top10")} variant="top">
-              {top.slice(0, 10).map((item, n) => (
-                <NxTopCard
-                  key={`${item.media_type}_${item.id}`}
-                  item={item}
-                  rank={n + 1}
-                  onClick={() => preview(item, enrichedRatingsMap[`movie_${item.id}`])}
-                />
-              ))}
-            </NxRow>
+            <div key="trendingMovies">
+              <NxRow title={t("home.top10")} variant="top">
+                {top.slice(0, 10).map((item, n) => (
+                  <NxTopCard
+                    key={`${item.media_type}_${item.id}`}
+                    item={item}
+                    rank={n + 1}
+                    onClick={() => preview(item, enrichedRatingsMap[`movie_${item.id}`])}
+                  />
+                ))}
+              </NxRow>
+              <NxFeatureRow
+                title={t("home.featured")}
+                items={featuredItems}
+                apiKey={apiKey}
+                onSelect={(i) => preview(i, enrichedRatingsMap[`${i.media_type}_${i.id}`])}
+              />
+            </div>
           );
         }
         if (id === "trendingTV") {

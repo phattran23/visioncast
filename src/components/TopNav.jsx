@@ -91,7 +91,16 @@ export default function TopNav({ page, canBack, onBack, onNavigate, onSearch, se
       title={account ? account.name : t("nav.settings")}
     >
       {account ? (
-        <span>{account.name.trim().charAt(0).toUpperCase()}</span>
+        <span>
+          {account.name
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((w, i, a) => (i === 0 || i === a.length - 1 ? w.charAt(0) : ""))
+            .join("")
+            .slice(0, 2)
+            .toUpperCase()}
+        </span>
       ) : (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">
           <circle cx="12" cy="8" r="4" />
@@ -103,7 +112,7 @@ export default function TopNav({ page, canBack, onBack, onNavigate, onSearch, se
 
   return (
     <>
-      <header ref={ref} className={`vc-nav${solid ? " is-solid" : ""}`}>
+      <header ref={ref} className={`vc-nav${solid ? " is-solid" : ""}${page === "home" ? " is-home" : ""}`}>
         <div className="vc-nav__row">
           {canBack && (
             <button
@@ -122,6 +131,9 @@ export default function TopNav({ page, canBack, onBack, onNavigate, onSearch, se
               <VisionCastWordmark />
             </span>
           </button>
+
+          {/* Phones: large page title on the home screen */}
+          {page === "home" && <h1 className="vc-nav__large">{t("nav.home")}</h1>}
 
           <nav className="vc-nav__links" aria-label="Primary">
             {LINKS.map((l) => (
