@@ -1146,8 +1146,16 @@ export default function App() {
   );
   const openPreview = useCallback((item, meta = {}) => {
     setShowSearch(false);
-    setPreview({ item: { ...item, media_type: item.media_type === "tv" ? "tv" : "movie" }, meta });
-  }, []);
+    const it = { ...item, media_type: item.media_type === "tv" ? "tv" : "movie" };
+    // Phones go straight to the big-artwork title page; wide screens get
+    // the quick preview window
+    if (window.matchMedia?.("(max-width: 760px)").matches) {
+      setPreview(null);
+      handleSelectResult(it);
+      return;
+    }
+    setPreview({ item: it, meta });
+  }, [handleSelectResult]);
   // Open a title and start playing right away. Series resume the last
   // episode watched (or start at S1 E1).
   const playTitle = useCallback(
