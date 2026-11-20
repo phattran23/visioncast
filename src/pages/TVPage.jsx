@@ -1749,6 +1749,7 @@ export default function TVPage({
         return (
           <AppleTitle
             apiKey={apiKey}
+            restricted={restricted}
             type="tv"
             item={d}
             cert={rating.cert}

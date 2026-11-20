@@ -800,6 +800,7 @@ export default function MoviePage({
       {!playing && (
         <AppleTitle
           apiKey={apiKey}
+          restricted={restricted}
           type="movie"
           item={d}
           cert={rating.cert}

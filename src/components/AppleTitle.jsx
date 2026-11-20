@@ -55,6 +55,7 @@ export default function AppleTitle({
   episodes = [],
   onEpisode,
   epProgress, // (ep) => pct
+  restricted = false, // age-limited: no autoplaying trailer
   currentEp, // episode_number playing / to resume
 }) {
   const t = useT();
@@ -65,6 +66,100 @@ export default function AppleTitle({
   const [clamped, setClamped] = useState(false);
   const [trailer, setTrailer] = useState(null);
   const textRef = useRef(null);
+
+  // ── Muted trailer in the hero (like a streaming app's title page) ──────
+  // Starts a moment after the artwork shows, fades in only once YouTube is
+  // really playing and its start-up overlay has gone, pauses while the hero
+  // is scrolled away. Skipped for age-limited titles and on data saver.
+  const heroRef = useRef(null);
+  const ytRef = useRef(null);
+  const ytHeard = useRef(false);
+  const ytHello = useRef(null);
+  const ytReveal = useRef(null);
+  const [yt, setYt] = useState("off"); // off | loading | playing | failed
+  const [ytOn, setYtOn] = useState(false); // iframe mounted
+  const [muted, setMuted] = useState(true);
+  const heroVideo = extra?.videos?.find((v) => v.type === "Trailer") || extra?.videos?.find((v) => v.type === "Teaser") || null;
+  const saveData = typeof navigator !== "undefined" && navigator.connection?.saveData;
+  const ytCmd = (func, args = []) =>
+    ytRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
+
+  useEffect(() => {
+    if (!heroVideo || restricted || saveData) return;
+    setYt("loading");
+    setMuted(true);
+    ytHeard.current = false;
+    const start = setTimeout(() => setYtOn(true), 1200);
+    const onMsg = (e) => {
+      if (!ytRef.current || e.source !== ytRef.current.contentWindow) return;
+      let m = e.data;
+      try {
+        m = typeof m === "string" ? JSON.parse(m) : m;
+      } catch {
+        return;
+      }
+      if (!m || typeof m !== "object") return;
+      if (!ytHeard.current) {
+        ytHeard.current = true;
+        clearInterval(ytHello.current);
+        ytCmd("addEventListener", ["onStateChange"]);
+        ytCmd("addEventListener", ["onError"]);
+      }
+      if (m.event === "onReady") {
+        ytCmd("mute");
+        ytCmd("playVideo");
+      }
+      const state = m.event === "onStateChange" ? m.info : m.info?.playerState;
+      if (state === 1 && !ytReveal.current)
+        ytReveal.current = setTimeout(() => setYt((s) => (s === "loading" ? "playing" : s)), 3000);
+      if (m.event === "onError") setYt("failed");
+    };
+    window.addEventListener("message", onMsg);
+    return () => {
+      clearTimeout(start);
+      clearInterval(ytHello.current);
+      clearTimeout(ytReveal.current);
+      ytReveal.current = null;
+      window.removeEventListener("message", onMsg);
+      setYtOn(false);
+      setYt("off");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heroVideo?.key, restricted, saveData]);
+
+  const onYtLoad = () => {
+    const w = ytRef.current?.contentWindow;
+    if (!w) return;
+    clearInterval(ytHello.current);
+    let n = 0;
+    const hello = () => {
+      if (ytHeard.current || ++n > 60) return clearInterval(ytHello.current);
+      w.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*");
+    };
+    hello();
+    ytHello.current = setInterval(hello, 250);
+  };
+
+  // Pause while the hero is out of view, carry on when it's back
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || !ytOn || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([e]) => ytCmd(e.intersectionRatio > 0.35 ? "playVideo" : "pauseVideo"),
+      { threshold: [0, 0.35, 0.7] },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ytOn]);
+
+  const toggleMute = () => {
+    if (muted) {
+      ytCmd("unMute");
+      ytCmd("setVolume", [100]);
+      ytCmd("playVideo");
+    } else ytCmd("mute");
+    setMuted(!muted);
+  };
   const title = item.title || item.name;
 
   useEffect(() => {
@@ -139,7 +234,7 @@ export default function AppleTitle({
         </button>
       )}
 
-      <div className="vc-at__hero">
+      <div className="vc-at__hero" ref={heroRef}>
         {pic ? (
           art.textless || !item.backdrop_path ? (
             <img className="vc-at__art" src={imgUrl(pic, "w780")} srcSet={posterSrcSet(pic)} sizes="100vw" alt="" />
@@ -147,7 +242,28 @@ export default function AppleTitle({
             <img className="vc-at__art" src={imgUrl(item.backdrop_path, "w1280")} srcSet={backdropSrcSet(item.backdrop_path)} sizes="100vw" alt="" />
           )
         ) : null}
+        {ytOn && heroVideo && yt !== "failed" && (
+          <iframe
+            ref={ytRef}
+            className={`vc-at__yt${yt === "playing" ? " is-playing" : ""}`}
+            src={`https://www.youtube-nocookie.com/embed/${heroVideo.key}?autoplay=1&mute=1&controls=0&loop=1&playlist=${heroVideo.key}&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
+            title={`${title} trailer`}
+            allow="autoplay; encrypted-media"
+            tabIndex={-1}
+            aria-hidden="true"
+            onLoad={onYtLoad}
+          />
+        )}
         <div className="vc-at__shade" aria-hidden="true" />
+        {yt === "playing" && (
+          <button className="vc-at__mute" onClick={toggleMute} aria-label={muted ? t("preview.unmute") : t("preview.mute")}>
+            {muted ? (
+              <Svg size={20} sw={1.9}><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M17 9l5 6M22 9l-5 6" /></Svg>
+            ) : (
+              <Svg size={20} sw={1.9}><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12" /></Svg>
+            )}
+          </button>
+        )}
         <div className="vc-at__info">
           {chip && <span className="vc-at__chip">{chip}</span>}
           <h1 className="vc-at__title">
