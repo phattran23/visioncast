@@ -53,6 +53,7 @@ const DownloadsPage = lazy(() => import("./pages/DownloadsPage"));
 const BrowsePage = lazy(() => import("./pages/BrowsePage"));
 const NewHotPage = lazy(() => import("./pages/NewHotPage"));
 import NxPreview from "./components/NxPreview";
+import PersonSheet from "./components/PersonSheet";
 import PickForMe from "./components/PickForMe";
 import ShareSheet, { shareTitle } from "./components/ShareSheet";
 import { continueAsGuest } from "./utils/account";
@@ -1182,6 +1183,14 @@ export default function App() {
     },
     [handleSelectResult],
   );
+  // A person's titles (opened from cast lists anywhere)
+  const [personSheet, setPersonSheet] = useState(null);
+  useEffect(() => {
+    const on = (e) => e.detail?.id && setPersonSheet(e.detail);
+    window.addEventListener("visioncast:person", on);
+    return () => window.removeEventListener("visioncast:person", on);
+  }, []);
+
   // Phone title pages have their own floating back button
   useEffect(() => {
     const on = () => navigateBack();
@@ -1491,6 +1500,17 @@ export default function App() {
           />
         )}
         {shareItem && <ShareSheet item={shareItem} onClose={() => setShareItem(null)} />}
+        {personSheet && (
+          <PersonSheet
+            person={personSheet}
+            apiKey={apiKey}
+            onClose={() => setPersonSheet(null)}
+            onPick={(x) => {
+              setPersonSheet(null);
+              openPreview(x);
+            }}
+          />
+        )}
         {showPick && (
           <PickForMe
             apiKey={apiKey}

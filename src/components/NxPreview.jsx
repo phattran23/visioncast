@@ -263,7 +263,7 @@ export default function NxPreview({
   };
 
   const match = matchScore(full, aff);
-  const cast = (d?.credits?.cast || []).slice(0, 4).map((c) => c.name);
+  const cast = (d?.credits?.cast || []).slice(0, 4);
   const genres = (d?.genres || []).map((g) => g.name);
   const similar = (d?.recommendations?.results || [])
     .filter((r) => r.backdrop_path && !isDisliked({ ...r, media_type: type }))
@@ -390,7 +390,15 @@ export default function NxPreview({
           <div className="nx-preview__side">
             {cast.length > 0 && (
               <p>
-                <span>{t("preview.cast")}:</span> {cast.join(", ")}
+                <span>{t("preview.cast")}:</span>{" "}
+                {cast.map((c, i) => (
+                  <span key={c.id} className="nx-preview__castwrap">
+                    <button className="nx-preview__cast" onClick={() => window.dispatchEvent(new CustomEvent("visioncast:person", { detail: { id: c.id, name: c.name, profile_path: c.profile_path } }))}>
+                      {c.name}
+                    </button>
+                    {i < cast.length - 1 ? ", " : ""}
+                  </span>
+                ))}
               </p>
             )}
             {genres.length > 0 && (

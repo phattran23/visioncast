@@ -1,0 +1,299 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Person page (cast & crew): full screen on phones, centred panel elsewhere
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* cast entries are buttons now */
+.vc-at__person {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+.nx-preview__cast {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    opacity: 1;
+    text-decoration: underline;
+    text-decoration-color: rgba(127, 127, 127, 0.5);
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.nx-preview__cast:hover {
+    text-decoration-color: currentColor;
+}
+.nx-preview__side .nx-preview__castwrap {
+    opacity: 1;
+}
+
+.vc-person {
+    position: fixed;
+    inset: 0;
+    z-index: 420;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 5vh 16px;
+    background: rgba(0, 0, 0, 0.72);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    animation: nx-fade 0.2s ease;
+}
+.vc-person__panel {
+    position: relative;
+    width: min(900px, 100%);
+    padding: 28px 28px 32px;
+    border-radius: 18px;
+    background: #141418;
+    color: #fff;
+    box-shadow: 0 40px 120px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    animation: nx-rise 0.28s var(--ease);
+}
+:root[data-theme="halo-light"] .vc-person__panel {
+    background: #fbfbf8;
+    color: var(--text);
+}
+.vc-person__close {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(127, 127, 127, 0.2);
+    color: inherit;
+    cursor: pointer;
+}
+
+.vc-person__head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+.vc-person__photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center 20%;
+    background: #26262c;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1), 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+.vc-person__photo--empty {
+    display: grid;
+    place-items: center;
+    font-size: 54px;
+    font-weight: 800;
+}
+.vc-person__name {
+    margin: 8px 0 0;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+}
+.vc-person__facts {
+    margin: 0;
+    max-width: 560px;
+    font-size: 14.5px;
+    opacity: 0.65;
+}
+.vc-person__bio-wrap {
+    max-width: 680px;
+    margin: 16px auto 0;
+    text-align: center;
+}
+.vc-person__bio {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    opacity: 0.85;
+    white-space: pre-line;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.vc-person__bio.is-open {
+    display: block;
+}
+.vc-person__more {
+    margin-top: 8px;
+    padding: 3px 12px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(127, 127, 127, 0.22);
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.vc-person__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 26px 0 12px;
+}
+.vc-person__bar h2 {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 800;
+}
+.vc-person__chips {
+    display: flex;
+    gap: 8px;
+}
+.vc-person__chip {
+    height: 32px;
+    padding: 0 14px;
+    border: 1px solid rgba(127, 127, 127, 0.4);
+    border-radius: 999px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.vc-person__chip.on {
+    background: #fff;
+    border-color: #fff;
+    color: #000;
+}
+:root[data-theme="halo-light"] .vc-person__chip.on {
+    background: var(--text);
+    border-color: var(--text);
+    color: #fff;
+}
+
+.vc-person__grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px 10px;
+}
+.vc-person__tile {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.vc-person__poster {
+    position: relative;
+    display: block;
+    aspect-ratio: 2 / 3;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #1b1b21;
+}
+.vc-person__poster::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+.vc-person__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: filter 0.2s ease;
+}
+@media (hover: hover) {
+    .vc-person__tile:hover .vc-person__poster img {
+        filter: brightness(1.12);
+    }
+}
+.vc-person__tile.is-loading {
+    aspect-ratio: 2 / 3;
+    border-radius: 10px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    background-size: 200% 100%;
+    animation: nx-shimmer 1.2s linear infinite;
+}
+.vc-person__ttl,
+.vc-person__role {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.vc-person__ttl {
+    font-size: 13.5px;
+    font-weight: 700;
+}
+.vc-person__role {
+    font-size: 12.5px;
+    opacity: 0.6;
+}
+.vc-person__empty {
+    grid-column: 1 / -1;
+    padding: 24px 0;
+    text-align: center;
+    opacity: 0.6;
+}
+body.vc-scrolling .vc-person__tile {
+    pointer-events: none;
+}
+
+@media (max-width: 760px) {
+    .vc-person {
+        padding: 0;
+        background: transparent;
+    }
+    .vc-person__panel {
+        width: 100%;
+        min-height: 100%;
+        padding: calc(env(safe-area-inset-top) + 64px) 16px calc(28px + env(safe-area-inset-bottom));
+        border-radius: 0;
+        background: var(--bg, #0b0b0e);
+        box-shadow: none;
+        animation: nx-fade 0.2s ease;
+    }
+    .vc-person__close {
+        position: fixed;
+        top: calc(env(safe-area-inset-top) + 10px);
+        left: 14px;
+        width: 44px;
+        height: 44px;
+        background: rgba(30, 30, 34, 0.6);
+        color: #fff;
+        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(16px);
+    }
+    .vc-person__photo {
+        width: 132px;
+        height: 132px;
+    }
+    .vc-person__name {
+        font-size: 27px;
+    }
+    .vc-person__grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px 8px;
+    }
+}
+@media (min-width: 761px) and (max-width: 1000px) {
+    .vc-person__grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}

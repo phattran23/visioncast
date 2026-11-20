@@ -393,11 +393,11 @@ export default function AppleTitle({
         <Section title={t("search.people")} more>
           <div className="vc-at__rail vc-at__rail--cast">
             {extra.cast.map((c) => (
-              <div key={c.credit_id || c.id} className="vc-at__person">
+              <button key={c.credit_id || c.id} className="vc-at__person" onClick={() => window.dispatchEvent(new CustomEvent("visioncast:person", { detail: { id: c.id, name: c.name, profile_path: c.profile_path } }))}>
                 <img src={imgUrl(c.profile_path, "w185")} alt="" loading="lazy" />
                 <b>{c.name}</b>
                 {c.character && <span>{c.character}</span>}
-              </div>
+              </button>
             ))}
           </div>
         </Section>
