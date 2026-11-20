@@ -794,6 +794,12 @@ export default function App() {
     document.body.classList.toggle("vc-watching", watchingNow);
     return () => document.body.classList.remove("vc-watching");
   }, [watchingNow]);
+  // …and a title page that isn't playing gets the big-artwork layout
+  const titlePageNow = !!currentTitleKey && !watchingNow;
+  useEffect(() => {
+    document.body.classList.toggle("vc-titlepage", titlePageNow);
+    return () => document.body.classList.remove("vc-titlepage");
+  }, [titlePageNow]);
 
   // Hide the dock while a video is full screen
   useEffect(() => {
@@ -1168,6 +1174,13 @@ export default function App() {
     },
     [handleSelectResult],
   );
+  // Phone title pages have their own floating back button
+  useEffect(() => {
+    const on = () => navigateBack();
+    window.addEventListener("visioncast:back", on);
+    return () => window.removeEventListener("visioncast:back", on);
+  }, [navigateBack]);
+
   // Other parts of the app (e.g. the phone watch panel) ask for a preview
   useEffect(() => {
     const on = (e) => e.detail && openPreview(e.detail);

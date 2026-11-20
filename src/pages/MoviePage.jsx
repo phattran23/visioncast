@@ -67,6 +67,7 @@ import {
 import { setPlayerGamepadActive } from "../utils/gamepadPlayerState";
 import PlayerFrame from "../components/PlayerFrame";
 import WatchBar from "../components/WatchBar";
+import AppleTitle from "../components/AppleTitle";
 import { useT } from "../utils/i18n";
 
 export default function MoviePage({
@@ -795,6 +796,28 @@ export default function MoviePage({
 
   return (
     <div className={`fade-in vc-title${playing ? " is-playing" : ""}`}>
+      {/* Phones: big-artwork title page (hidden while playing / on wide screens) */}
+      {!playing && (
+        <AppleTitle
+          apiKey={apiKey}
+          type="movie"
+          item={d}
+          cert={rating.cert}
+          saved={isSaved}
+          onSave={onSave}
+          onShare={onShare ? () => onShare({ ...d, media_type: "movie" }) : null}
+          primaryLabel={
+            restricted
+              ? t("preview.locked")
+              : isUnreleased
+                ? t("at.notYet")
+                : (progress[progressKey] || 0) > 2
+                  ? t("media.continue")
+                  : t("hero.play")
+          }
+          onPrimary={!restricted && !isUnreleased ? handlePlay : null}
+        />
+      )}
       <div className="detail-hero">
         <div
           className="detail-bg"

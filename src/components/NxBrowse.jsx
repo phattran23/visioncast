@@ -51,7 +51,7 @@ export const genreNames = (item, lang, max = 2) =>
 
 // Title logo + a poster without text, from TMDB's image lists (cached)
 const artCache = new Map();
-function useTitleArt(item, apiKey) {
+export function useTitleArt(item, apiKey) {
   const lang = useLang();
   const type = item?.media_type === "tv" ? "tv" : "movie";
   const key = item ? `${type}_${item.id}_${lang}` : null;

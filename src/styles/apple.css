@@ -173,16 +173,21 @@
     }
     .nx-hero__actions .nx-btn--play {
         flex: 0 0 auto;
-        width: min(60vw, 250px);
-        height: 50px;
+        width: auto;
+        height: 42px;
+        padding: 0 26px 0 20px;
         border-radius: 999px;
-        font-size: 17px;
+        font-size: 16px;
         background: rgba(255, 255, 255, 0.95);
+    }
+    .nx-hero__actions .nx-btn--play svg {
+        width: 18px;
+        height: 18px;
     }
     .nx-hero__actions .nx-btn--list {
         flex: 0 0 auto;
-        width: 50px;
-        height: 50px;
+        width: 42px;
+        height: 42px;
         padding: 0;
         border-radius: 50%;
         background: rgba(60, 60, 66, 0.72);
@@ -447,6 +452,491 @@
         overflow: hidden;
     }
     body.vc-scrolling .nx-feature__card {
+        pointer-events: none;
+    }
+}
+
+/* ══ Phone title page (AppleTitle) ═════════════════════════════════════════ */
+.vc-at {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    .vc-title:not(.is-playing) .vc-at {
+        display: block;
+    }
+    /* the big-artwork page replaces the regular detail card + episode list */
+    .vc-title:not(.is-playing) > .detail-hero,
+    .vc-title:not(.is-playing) .vc-episodes {
+        display: none !important;
+    }
+    body.vc-titlepage .vc-nav {
+        display: none !important;
+    }
+
+    /* Floating back / share */
+    .vc-at__fab {
+        position: fixed;
+        top: calc(env(safe-area-inset-top) + 10px);
+        z-index: 60;
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(30, 30, 34, 0.55);
+        color: #fff;
+        -webkit-backdrop-filter: blur(16px) saturate(1.4);
+        backdrop-filter: blur(16px) saturate(1.4);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+    }
+    .vc-at__fab--back {
+        left: 14px;
+    }
+    .vc-at__fab--share {
+        right: 14px;
+    }
+
+    /* Hero */
+    .vc-at__hero {
+        position: relative;
+        height: min(86svh, 760px);
+        min-height: 560px;
+        overflow: hidden;
+        background: #000;
+    }
+    .vc-at__art {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 15%;
+    }
+    .vc-at__shade {
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 18%),
+            linear-gradient(to top, var(--bg) 0%, rgba(0, 0, 0, 0.62) 30%, rgba(0, 0, 0, 0) 56%);
+    }
+    .vc-at__info {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 0 22px;
+        color: #fff;
+        text-align: center;
+    }
+    .vc-at__chip {
+        display: inline-flex;
+        align-items: center;
+        height: 28px;
+        padding: 0 11px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 9px;
+        background: rgba(0, 0, 0, 0.3);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        font-size: 13.5px;
+        font-weight: 600;
+    }
+    .vc-at__title {
+        margin: 2px 0;
+        font-size: 34px;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.015em;
+        text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+    }
+    .vc-at__title img {
+        display: block;
+        max-width: 76vw;
+        max-height: 104px;
+        margin: 0 auto;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.45));
+    }
+    .vc-at__genres {
+        margin: 0;
+        font-size: 15px;
+        color: rgba(255, 255, 255, 0.88);
+        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+    }
+    .vc-at__actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 6px;
+    }
+    .vc-at__play {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 44px;
+        padding: 0 28px 0 22px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.95);
+        color: #000;
+        font: inherit;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .vc-at__play:disabled {
+        background: rgba(255, 255, 255, 0.4);
+        cursor: not-allowed;
+    }
+    .vc-at__round {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(60, 60, 66, 0.72);
+        color: #fff;
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        cursor: pointer;
+    }
+    .vc-at__round.on {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* About */
+    .vc-at__about {
+        padding: 6px 16px 4px;
+    }
+    .vc-at__overview-wrap {
+        position: relative;
+    }
+    .vc-at__overview {
+        margin: 0;
+        font-size: 15.5px;
+        line-height: 1.5;
+        color: var(--text);
+        opacity: 0.88;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .vc-at__overview.is-open {
+        display: block;
+    }
+    .vc-at__more {
+        margin-top: 6px;
+        padding: 3px 11px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(127, 127, 127, 0.22);
+        color: var(--text);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+    }
+    .vc-at__facts {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin: 12px 0 0;
+        font-size: 15px;
+        color: var(--text2);
+    }
+    .vc-at__box {
+        padding: 0 5px;
+        border: 1px solid currentColor;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 17px;
+    }
+    .vc-at__box--fill {
+        border-color: transparent;
+        background: rgba(127, 127, 127, 0.45);
+        color: var(--text);
+    }
+
+    /* Sections */
+    .vc-at__sec {
+        margin-top: 26px;
+    }
+    .vc-at__h2 {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        margin: 0 0 12px;
+        padding: 0 16px;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        color: var(--text);
+    }
+    .vc-at__h2 svg {
+        opacity: 0.6;
+    }
+    .vc-at__seasons {
+        display: flex;
+        gap: 8px;
+        margin: -4px 0 12px;
+        padding: 0 16px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .vc-at__seasons::-webkit-scrollbar {
+        display: none;
+    }
+    .vc-at__season {
+        flex-shrink: 0;
+        height: 32px;
+        padding: 0 14px;
+        border: 1px solid rgba(127, 127, 127, 0.4);
+        border-radius: 999px;
+        background: none;
+        color: var(--text);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .vc-at__season.on {
+        background: var(--text);
+        border-color: var(--text);
+        color: var(--bg);
+    }
+    .vc-at__rail {
+        display: flex;
+        gap: 12px;
+        padding: 0 16px 4px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-padding: 0 16px;
+        scrollbar-width: none;
+    }
+    .vc-at__rail::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Episode cards */
+    .vc-at__ep,
+    .vc-at__vid {
+        position: relative;
+        flex: 0 0 84%;
+        aspect-ratio: 5 / 4.6;
+        padding: 0;
+        border: 0;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #1b1b21;
+        color: #fff;
+        font: inherit;
+        text-align: left;
+        scroll-snap-align: start;
+        cursor: pointer;
+    }
+    .vc-at__vid {
+        aspect-ratio: 16 / 11;
+    }
+    .vc-at__ep::before,
+    .vc-at__vid::before,
+    .vc-at__poster::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        border-radius: inherit;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+        pointer-events: none;
+    }
+    .vc-at__ep > img,
+    .vc-at__vid > img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .vc-at__epempty {
+        position: absolute;
+        inset: 0;
+        background: #26262c;
+    }
+    .vc-at__epshade {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(20, 20, 24, 0.96) 0%, rgba(20, 20, 24, 0.75) 38%, rgba(20, 20, 24, 0) 62%);
+    }
+    .vc-at__eptext,
+    .vc-at__vidtext {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 14px;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .vc-at__epnum {
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        opacity: 0.75;
+    }
+    .vc-at__eptext b,
+    .vc-at__vidtext b {
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .vc-at__epdesc {
+        font-size: 14px;
+        line-height: 1.45;
+        opacity: 0.82;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .vc-at__epfoot,
+    .vc-at__vidtext > span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        opacity: 0.9;
+    }
+    .vc-at__epbar {
+        flex: 0 0 60px;
+        height: 4px;
+        margin-left: 6px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+    }
+    .vc-at__epbar span {
+        display: block;
+        height: 100%;
+        background: #fff;
+    }
+    .vc-at__ep.is-current .vc-at__epnum {
+        color: var(--signal);
+        opacity: 1;
+    }
+
+    /* Related posters */
+    .vc-at__poster {
+        position: relative;
+        flex: 0 0 37%;
+        aspect-ratio: 2 / 3;
+        padding: 0;
+        border: 0;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #1b1b21;
+        scroll-snap-align: start;
+        cursor: pointer;
+    }
+    .vc-at__poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Cast */
+    .vc-at__rail--cast {
+        gap: 16px;
+        padding-bottom: 12px;
+    }
+    .vc-at__person {
+        flex: 0 0 96px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        text-align: center;
+        scroll-snap-align: start;
+    }
+    .vc-at__person img {
+        width: 92px;
+        height: 92px;
+        margin-bottom: 4px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #1b1b21;
+    }
+    .vc-at__person b,
+    .vc-at__person span {
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .vc-at__person b {
+        font-size: 13.5px;
+        color: var(--text);
+    }
+    .vc-at__person span {
+        font-size: 12.5px;
+        color: var(--text2);
+    }
+
+    /* Trailer player */
+    .vc-at__trailer {
+        position: fixed;
+        inset: 0;
+        z-index: 450;
+        display: grid;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.92);
+        animation: nx-fade 0.2s ease;
+    }
+    .vc-at__trailerbox {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+    }
+    .vc-at__trailerbox iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+    .vc-at__trailerx {
+        position: absolute;
+        top: calc(env(safe-area-inset-top) + 12px);
+        right: 14px;
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        cursor: pointer;
+    }
+    body.vc-scrolling .vc-at__ep,
+    body.vc-scrolling .vc-at__poster,
+    body.vc-scrolling .vc-at__vid {
         pointer-events: none;
     }
 }

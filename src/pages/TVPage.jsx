@@ -76,6 +76,7 @@ import {
 import { setPlayerGamepadActive } from "../utils/gamepadPlayerState";
 import PlayerFrame from "../components/PlayerFrame";
 import WatchBar from "../components/WatchBar";
+import AppleTitle from "../components/AppleTitle";
 import { useT } from "../utils/i18n";
 
 // ── Partial-circle progress icon (cached per pct tier) ───────────────────────
@@ -1731,6 +1732,41 @@ export default function TVPage({
 
   return (
     <div className={`fade-in vc-title${playing ? " is-playing" : ""}`}>
+      {/* Phones: big-artwork title page (hidden while playing / on wide screens) */}
+      {!playing && (() => {
+        const epKey = (ep) => `tv_${item.id}_s${selectedSeason}e${ep.episode_number}`;
+        const inProg = currentSeasonEpisodes.find((ep) => {
+          const p = progress[epKey(ep)] || 0;
+          return p > 2 && p < 98;
+        });
+        const fromItem =
+          Number(item.season) === Number(selectedSeason) && item.episode != null
+            ? currentSeasonEpisodes.find((ep) => ep.episode_number === Number(item.episode))
+            : null;
+        const target = fromItem || inProg || currentSeasonEpisodes[0];
+        const code = target ? t("watch.code", { s: selectedSeason, e: target.episode_number }) : "";
+        const resume = target && (progress[epKey(target)] || 0) > 2;
+        return (
+          <AppleTitle
+            apiKey={apiKey}
+            type="tv"
+            item={d}
+            cert={rating.cert}
+            saved={isSaved}
+            onSave={onSave}
+            onShare={onShare ? () => onShare({ ...d, media_type: "tv" }) : null}
+            primaryLabel={restricted ? t("preview.locked") : resume ? t("at.resume", { ep: code }) : target ? t("at.playEp", { ep: code }) : t("hero.play")}
+            onPrimary={!restricted && target ? () => playEpisode(target) : null}
+            seasons={seasons}
+            season={selectedSeason}
+            onSeason={setSelectedSeason}
+            episodes={currentSeasonEpisodes}
+            onEpisode={(ep) => !restricted && playEpisode(ep)}
+            epProgress={(ep) => progress[epKey(ep)] || 0}
+            currentEp={target?.episode_number}
+          />
+        );
+      })()}
       {loading && (
         <div className="loader">
           <div className="spinner" />
